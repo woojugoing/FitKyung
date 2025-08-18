@@ -539,6 +539,7 @@
             
             <div class="member-form" id="memberForm" style="display: none;">
                 <input type="text" id="nickname" placeholder="닉네임을 입력하세요" required>
+                <input type="password" id="memberPin" placeholder="비밀번호(숫자 4자리)" pattern="\\d{4}" maxlength="4" inputmode="numeric" required>
                 <button type="button" id="saveMemberBtn" class="primary-btn">등록</button>
                 <button type="button" id="cancelMemberBtn" class="secondary-btn">취소</button>
             </div>
@@ -564,7 +565,7 @@
                 
                 <div class="form-group">
                     <label for="workoutDate">운동 날짜:</label>
-                    <input type="date" id="workoutDate" required>
+                    <input type="date" id="workoutDate" required disabled>
                 </div>
                 
                 <div class="form-group">
@@ -573,10 +574,7 @@
                     <div id="photoPreview" class="photo-preview"></div>
                 </div>
 
-                <div class="form-group">
-                    <label for="workoutPhotoUrl">사진 URL (선택):</label>
-                    <input type="url" id="workoutPhotoUrl" placeholder="https://..." pattern="https?://.+">
-                </div>
+                
                 
                 <button type="submit" class="primary-btn">운동 등록</button>
                 
@@ -694,7 +692,7 @@
                     '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
                     '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
                 ];
-                this.useLocalStorage = false; // Firebase 연결 실패 시 로컬 스토리지 사용
+                this.useLocalStorage = false;
                 this.init();
             }
 
@@ -705,9 +703,8 @@
                 this.testSupabaseConnection().then(() => {
                     this.setupSupabaseListeners();
                 }).catch((error) => {
-                    console.warn('Supabase 연결 실패, 로컬 스토리지 모드로 전환:', error);
-                    this.useLocalStorage = true;
-                    this.loadLocalData();
+                    console.warn('Supabase 연결 실패:', error);
+                    this.updateConnectionStatus('Supabase 연결 실패', '#f8d7da', '#721c24');
                 });
                 
                 this.renderMembers();
@@ -812,26 +809,7 @@
                 this.renderWeeklyCalendar();
             }
 
-            // 로컬 스토리지 관련 메서드들
-            loadLocalData() {
-                const savedMembers = localStorage.getItem('fitkyung-members');
-                const savedWorkouts = localStorage.getItem('fitkyung-workouts');
-                
-                if (savedMembers) {
-                    this.members = JSON.parse(savedMembers);
-                }
-                
-                if (savedWorkouts) {
-                    this.workouts = JSON.parse(savedWorkouts);
-                }
-                
-                console.log('로컬 데이터 로드 완료:', this.members.length, '멤버,', this.workouts.length, '운동');
-            }
-
-            saveLocalData() {
-                localStorage.setItem('fitkyung-members', JSON.stringify(this.members));
-                localStorage.setItem('fitkyung-workouts', JSON.stringify(this.workouts));
-            }
+            // 로컬 스토리지 관련 제거
 
             setupEventListeners() {
                 // 탭 전환
@@ -852,7 +830,7 @@
 
                 document.getElementById('cancelMemberBtn').addEventListener('click', () => {
                     document.getElementById('memberForm').style.display = 'none';
-                    document.getElementById('nickname').value = '';
+                    document.getElementById('memberPin').value = '';
                 });
 
                 // 운동 추가
@@ -934,8 +912,13 @@
 
             async addMember() {
                 const nickname = document.getElementById('nickname').value.trim();
+                const pin = (document.getElementById('memberPin').value || '').trim();
                 if (!nickname) {
                     alert('닉네임을 입력해주세요.');
+                    return;
+                }
+                if (!/^\d{4}$/.test(pin)) {
+                    alert('비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
 
@@ -985,6 +968,7 @@
                     const member = {
                         nickname,
                         color: this.memberColors[this.members.length % this.memberColors.length],
+                        pin, // 평문 저장: 추후 보안 강화시 해시로 변경 권장
                         created_at: new Date().toISOString()
                     };
 
@@ -994,6 +978,7 @@
 
                     document.getElementById('memberForm').style.display = 'none';
                     document.getElementById('nickname').value = '';
+                    document.getElementById('memberPin').value = '';
                     alert('멤버가 성공적으로 등록되었습니다!');
                     
                 } catch (error) {
@@ -1006,9 +991,9 @@
                 console.log('addWorkout 함수 호출됨');
                 
                 const memberId = document.getElementById('memberSelect').value;
-                const date = document.getElementById('workoutDate').value; // YYYY-MM-DD
+                const date = new Date().toISOString().slice(0,10); // 오늘 날짜 고정 YYYY-MM-DD
                 const photoFile = document.getElementById('workoutPhoto').files[0];
-                const photoUrlInput = (document.getElementById('workoutPhotoUrl').value || '').trim();
+                const photoUrlInput = '';
 
                 console.log('운동 추가 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
 
@@ -1163,6 +1148,7 @@
                         <div class="member-color" style="background-color: ${member.color}"></div>
                         <h3>${member.nickname}</h3>
                         <button class="secondary-btn delete-member-btn" data-member-id="${member.id}">삭제</button>
+                        <input type="password" class="member-pin-input" placeholder="비밀번호(4자리)" maxlength="4" inputmode="numeric" pattern="\\d{4}" style="margin-top:8px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;" />
                     `;
                     membersList.appendChild(memberCard);
                 });
@@ -1172,7 +1158,9 @@
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const memberId = btn.dataset.memberId;
-                        this.deleteMember(memberId);
+                        const pinInput = btn.parentElement.querySelector('.member-pin-input');
+                        const pin = (pinInput?.value || '').trim();
+                        this.deleteMember(memberId, pin);
                     });
                 });
             }
@@ -1255,18 +1243,23 @@
                 document.getElementById('photoModal').style.display = 'block';
             }
 
-            async deleteMember(memberId) {
+            async deleteMember(memberId, providedPin) {
                 if (confirm('정말로 이 멤버를 삭제하시겠습니까? 관련된 모든 운동 기록도 함께 삭제됩니다.')) {
                     try {
-                        if (this.useLocalStorage) {
-                            this.workouts = this.workouts.filter(w => w.memberId !== memberId);
-                            this.members = this.members.filter(m => m.id !== memberId);
-                            this.saveLocalData();
-                            alert('멤버와 관련 운동 기록이 성공적으로 삭제되었습니다. (로컬)');
-                            this.renderMembers();
-                            this.updateMemberSelect();
-                            this.renderCalendar();
-                            this.renderStats();
+                        if (!/^\d{4}$/.test(providedPin)) {
+                            alert('비밀번호 4자리를 입력해주세요.');
+                            return;
+                        }
+
+                        // 서버에서 PIN 검증
+                        const { data: memberRow, error: fetchErr } = await supabase
+                            .from('members')
+                            .select('id, pin')
+                            .eq('id', memberId)
+                            .single();
+                        if (fetchErr || !memberRow) throw fetchErr || new Error('멤버 조회 실패');
+                        if (memberRow.pin !== providedPin) {
+                            alert('비밀번호가 올바르지 않습니다.');
                             return;
                         }
 
@@ -1429,9 +1422,9 @@
                 
                 // 실제 폼 데이터 가져오기
                 const memberId = document.getElementById('memberSelect').value;
-                const date = document.getElementById('workoutDate').value;
+                const date = new Date().toISOString().slice(0,10);
                 const photoFile = document.getElementById('workoutPhoto').files[0];
-                const photoUrlInput = (document.getElementById('workoutPhotoUrl').value || '').trim();
+                const photoUrlInput = '';
 
                 console.log('테스트 운동 등록 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
 
