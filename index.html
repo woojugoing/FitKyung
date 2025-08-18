@@ -453,6 +453,16 @@
             font-size: 0.9rem;
         }
 
+        .connection-status {
+            margin-top: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: #e0f2f7;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -508,6 +518,9 @@
         <header>
             <h1>FitKyung</h1>
             <p class="subtitle">함께하는 운동 관리 플랫폼</p>
+            <div id="connectionStatus" class="connection-status">
+                <span id="statusText">Firebase 연결 중...</span>
+            </div>
         </header>
 
         <nav class="main-nav">
@@ -680,6 +693,11 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
 
+        // Firebase 연결 상태 확인
+        console.log('Firebase 초기화 완료:', app);
+        console.log('Firestore 데이터베이스:', db);
+        console.log('Storage:', storage);
+
         class FitKyungApp {
             constructor() {
                 this.members = [];
@@ -690,36 +708,112 @@
                     '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
                     '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
                 ];
+                this.useLocalStorage = false; // Firebase 연결 실패 시 로컬 스토리지 사용
                 this.init();
             }
 
             init() {
                 this.setupEventListeners();
-                this.setupFirestoreListeners();
+                
+                // Firebase 연결 시도
+                this.testFirebaseConnection().then(() => {
+                    this.setupFirestoreListeners();
+                }).catch((error) => {
+                    console.warn('Firebase 연결 실패, 로컬 스토리지 모드로 전환:', error);
+                    this.useLocalStorage = true;
+                    this.loadLocalData();
+                });
+                
                 this.renderMembers();
                 this.renderCalendar();
                 this.updateMemberSelect();
-                this.renderStats(); // 현황 탭 초기화
-                this.renderWeeklyCalendar(); // 주별 캘린더 초기화
+                this.renderStats();
+                this.renderWeeklyCalendar();
+            }
+
+            async testFirebaseConnection() {
+                try {
+                    // 간단한 Firestore 읽기 테스트
+                    const testQuery = query(collection(db, 'members'), limit(1));
+                    await getDocs(testQuery);
+                    console.log('Firebase 연결 테스트 성공');
+                    this.updateConnectionStatus('Firebase 연결됨', '#d4edda', '#155724');
+                    return true;
+                } catch (error) {
+                    console.error('Firebase 연결 테스트 실패:', error);
+                    this.updateConnectionStatus('로컬 모드 (Firebase 연결 실패)', '#f8d7da', '#721c24');
+                    throw error;
+                }
+            }
+
+            updateConnectionStatus(text, bgColor, textColor) {
+                const statusElement = document.getElementById('connectionStatus');
+                const statusText = document.getElementById('statusText');
+                
+                if (statusElement && statusText) {
+                    statusElement.style.backgroundColor = bgColor;
+                    statusElement.style.color = textColor;
+                    statusText.textContent = text;
+                }
             }
 
             setupFirestoreListeners() {
-                // 멤버 실시간 구독
-                onSnapshot(collection(db, 'members'), (snapshot) => {
-                    this.members = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    this.renderMembers();
-                    this.updateMemberSelect();
-                    this.renderCalendar();
-                    this.renderStats(); // 멤버 변경 시 통계 다시 렌더링
-                });
+                if (this.useLocalStorage) return;
+                
+                console.log('Firestore 리스너 설정 시작...');
+                
+                try {
+                    // 멤버 실시간 구독
+                    onSnapshot(collection(db, 'members'), (snapshot) => {
+                        console.log('멤버 데이터 변경 감지:', snapshot.docs.length, '개');
+                        this.members = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        this.renderMembers();
+                        this.updateMemberSelect();
+                        this.renderCalendar();
+                        this.renderStats();
+                    }, (error) => {
+                        console.error('멤버 리스너 오류:', error);
+                        alert('멤버 데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
+                    });
 
-                // 운동 실시간 구독
-                onSnapshot(collection(db, 'workouts'), (snapshot) => {
-                    this.workouts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    this.renderCalendar();
-                    this.renderStats(); // 운동 변경 시 통계 다시 렌더링
-                    this.renderWeeklyCalendar(); // 운동 변경 시 주별 캘린더 다시 렌더링
-                });
+                    // 운동 실시간 구독
+                    onSnapshot(collection(db, 'workouts'), (snapshot) => {
+                        console.log('운동 데이터 변경 감지:', snapshot.docs.length, '개');
+                        this.workouts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        this.renderCalendar();
+                        this.renderStats();
+                        this.renderWeeklyCalendar();
+                    }, (error) => {
+                        console.error('운동 리스너 오류:', error);
+                        alert('운동 데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
+                    });
+                    
+                    console.log('Firestore 리스너 설정 완료');
+                } catch (error) {
+                    console.error('Firestore 리스너 설정 중 오류:', error);
+                    alert('데이터베이스 연결에 실패했습니다: ' + error.message);
+                }
+            }
+
+            // 로컬 스토리지 관련 메서드들
+            loadLocalData() {
+                const savedMembers = localStorage.getItem('fitkyung-members');
+                const savedWorkouts = localStorage.getItem('fitkyung-workouts');
+                
+                if (savedMembers) {
+                    this.members = JSON.parse(savedMembers);
+                }
+                
+                if (savedWorkouts) {
+                    this.workouts = JSON.parse(savedWorkouts);
+                }
+                
+                console.log('로컬 데이터 로드 완료:', this.members.length, '멤버,', this.workouts.length, '운동');
+            }
+
+            saveLocalData() {
+                localStorage.setItem('fitkyung-members', JSON.stringify(this.members));
+                localStorage.setItem('fitkyung-workouts', JSON.stringify(this.workouts));
             }
 
             setupEventListeners() {
@@ -810,25 +904,68 @@
                     return;
                 }
 
-                // 중복 닉네임 체크
-                const dupQ = query(collection(db, 'members'), where('nickname', '==', nickname), limit(1));
-                const dupSnap = await getDocs(dupQ);
-                if (!dupSnap.empty) {
-                    alert('이미 존재하는 닉네임입니다.');
+                console.log('멤버 추가 시작:', nickname);
+
+                if (this.useLocalStorage) {
+                    // 로컬 스토리지 모드
+                    if (this.members.find(m => m.nickname === nickname)) {
+                        alert('이미 존재하는 닉네임입니다.');
+                        return;
+                    }
+
+                    const member = {
+                        id: Date.now().toString(),
+                        nickname,
+                        color: this.memberColors[this.members.length % this.memberColors.length],
+                        createdAt: new Date().toISOString()
+                    };
+
+                    this.members.push(member);
+                    this.saveLocalData();
+                    
+                    document.getElementById('memberForm').style.display = 'none';
+                    document.getElementById('nickname').value = '';
+                    alert('멤버가 성공적으로 등록되었습니다! (로컬 모드)');
+                    
+                    this.renderMembers();
+                    this.updateMemberSelect();
+                    this.renderStats();
                     return;
                 }
 
-                const member = {
-                    nickname,
-                    color: this.memberColors[this.members.length % this.memberColors.length],
-                    createdAt: serverTimestamp()
-                };
+                // Firebase 모드
+                try {
+                    // 중복 닉네임 체크
+                    console.log('중복 닉네임 체크 중...');
+                    const dupQ = query(collection(db, 'members'), where('nickname', '==', nickname), limit(1));
+                    const dupSnap = await getDocs(dupQ);
+                    
+                    if (!dupSnap.empty) {
+                        alert('이미 존재하는 닉네임입니다.');
+                        return;
+                    }
 
-                await addDoc(collection(db, 'members'), member);
+                    console.log('중복 체크 완료, 멤버 생성 중...');
 
-                document.getElementById('memberForm').style.display = 'none';
-                document.getElementById('nickname').value = '';
-                alert('멤버가 성공적으로 등록되었습니다!');
+                    const member = {
+                        nickname,
+                        color: this.memberColors[this.members.length % this.memberColors.length],
+                        createdAt: serverTimestamp()
+                    };
+
+                    console.log('생성할 멤버 데이터:', member);
+
+                    const docRef = await addDoc(collection(db, 'members'), member);
+                    console.log('멤버 추가 성공! 문서 ID:', docRef.id);
+
+                    document.getElementById('memberForm').style.display = 'none';
+                    document.getElementById('nickname').value = '';
+                    alert('멤버가 성공적으로 등록되었습니다!');
+                    
+                } catch (error) {
+                    console.error('멤버 추가 중 오류 발생:', error);
+                    alert('멤버 등록에 실패했습니다: ' + error.message);
+                }
             }
 
             async addWorkout() {
