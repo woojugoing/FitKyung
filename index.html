@@ -3,154 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitKyung - 건강한 라이프스타일</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 60px 0;
-            color: white;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .subtitle {
-            font-size: 1.5rem;
-            opacity: 0.9;
-            margin-bottom: 30px;
-        }
-
-        .cta-button {
-            display: inline-block;
-            padding: 15px 30px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            border: 2px solid rgba(255,255,255,0.3);
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-
-        .cta-button:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 60px;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: #667eea;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .feature-description {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        footer {
-            text-align: center;
-            padding: 40px 0;
-            color: white;
-            margin-top: 60px;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-            
-            .subtitle {
-                font-size: 1.2rem;
-            }
-            
-            .container {
-                padding: 15px;
-            }
-        }
-    </style>
+    <title>FitKyung - 운동 관리 플랫폼</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>FitKyung</h1>
-            <p class="subtitle">건강한 라이프스타일을 위한 최고의 선택</p>
-            <a href="#features" class="cta-button">자세히 보기</a>
+            <p class="subtitle">함께하는 운동 관리 플랫폼</p>
         </header>
 
-        <section id="features" class="features">
-            <div class="feature-card">
-                <div class="feature-icon">💪</div>
-                <h3 class="feature-title">개인 맞춤 운동</h3>
-                <p class="feature-description">당신의 체력과 목표에 맞는 맞춤형 운동 프로그램을 제공합니다.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">🥗</div>
-                <h3 class="feature-title">영양 관리</h3>
-                <p class="feature-description">균형 잡힌 영양 섭취를 위한 전문적인 조언과 식단 계획을 제공합니다.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">진행 상황 추적</h3>
-                <p class="feature-description">체계적인 기록과 분석으로 당신의 건강 목표 달성을 도와줍니다.</p>
-            </div>
-        </section>
+        <nav class="main-nav">
+            <button class="nav-btn active" data-tab="members">멤버 관리</button>
+            <button class="nav-btn" data-tab="add-workout">운동 추가</button>
+            <button class="nav-btn" data-tab="calendar">운동 열람</button>
+        </nav>
 
-        <footer>
-            <p>&copy; 2024 FitKyung. 모든 권리 보유.</p>
-        </footer>
+        <!-- 멤버 관리 탭 -->
+        <div id="members" class="tab-content active">
+            <div class="section-header">
+                <h2>멤버 등록</h2>
+                <button id="addMemberBtn" class="primary-btn">새 멤버 추가</button>
+            </div>
+            
+            <div class="member-form" id="memberForm" style="display: none;">
+                <input type="text" id="nickname" placeholder="닉네임을 입력하세요" required>
+                <button type="button" id="saveMemberBtn" class="primary-btn">등록</button>
+                <button type="button" id="cancelMemberBtn" class="secondary-btn">취소</button>
+            </div>
+
+            <div class="members-list" id="membersList">
+                <!-- 멤버들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 운동 추가 탭 -->
+        <div id="add-workout" class="tab-content">
+            <div class="section-header">
+                <h2>운동 추가</h2>
+            </div>
+            
+            <form id="workoutForm" class="workout-form">
+                <div class="form-group">
+                    <label for="memberSelect">멤버 선택:</label>
+                    <select id="memberSelect" required>
+                        <option value="">멤버를 선택하세요</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="workoutDate">운동 날짜:</label>
+                    <input type="date" id="workoutDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="workoutPhoto">운동 사진:</label>
+                    <input type="file" id="workoutPhoto" accept="image/*" required>
+                    <div id="photoPreview" class="photo-preview"></div>
+                </div>
+                
+                <button type="submit" class="primary-btn">운동 등록</button>
+            </form>
+        </div>
+
+        <!-- 운동 열람 탭 -->
+        <div id="calendar" class="tab-content">
+            <div class="section-header">
+                <h2>운동 열람</h2>
+                <div class="calendar-controls">
+                    <button id="prevMonth" class="secondary-btn">◀</button>
+                    <span id="currentMonth">2024년 1월</span>
+                    <button id="nextMonth" class="secondary-btn">▶</button>
+                </div>
+            </div>
+            
+            <div class="calendar-view">
+                <div class="calendar-header">
+                    <div>일</div>
+                    <div>월</div>
+                    <div>화</div>
+                    <div>수</div>
+                    <div>목</div>
+                    <div>금</div>
+                    <div>토</div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- 캘린더가 여기에 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- 사진 상세보기 모달 -->
+    <div id="photoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <img id="modalImage" src="" alt="운동 사진">
+            <p id="modalInfo"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
