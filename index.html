@@ -415,32 +415,45 @@
         .weekly-calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
+            gap: 12px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .weekly-calendar .calendar-day {
             aspect-ratio: 1;
-            background: white;
-            border: 1px solid #ddd;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 3px solid transparent;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             font-size: 0.9rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
         .weekly-calendar .calendar-day:hover {
-            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
         }
 
         .weekly-calendar .calendar-day.has-workout {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            border-color: #4c63d2;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .weekly-calendar .calendar-day.has-workout:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
         }
 
         .stats-controls {
@@ -535,7 +548,6 @@
         <nav class="main-nav">
             <button class="nav-btn active" data-tab="members">멤버 관리</button>
             <button class="nav-btn" data-tab="add-workout">운동 추가</button>
-            <button class="nav-btn" data-tab="calendar">운동 열람</button>
             <button class="nav-btn" data-tab="stats">현황</button>
         </nav>
 
@@ -588,32 +600,7 @@
             </form>
         </div>
 
-        <!-- 운동 열람 탭 -->
-        <div id="calendar" class="tab-content">
-            <div class="section-header">
-                <h2>운동 열람</h2>
-                <div class="calendar-controls">
-                    <button id="prevMonth" class="secondary-btn">◀</button>
-                    <span id="currentMonth">2024년 1월</span>
-                    <button id="nextMonth" class="secondary-btn">▶</button>
-                </div>
-            </div>
-            
-            <div class="calendar-view">
-                <div class="calendar-header">
-                    <div>일</div>
-                    <div>월</div>
-                    <div>화</div>
-                    <div>수</div>
-                    <div>목</div>
-                    <div>금</div>
-                    <div>토</div>
-                </div>
-                <div class="calendar-grid" id="calendarGrid">
-                    <!-- 캘린더가 여기에 동적으로 생성됩니다 -->
-                </div>
-            </div>
-        </div>
+
 
         <!-- 현황 탭 -->
         <div id="stats" class="tab-content">
@@ -811,9 +798,8 @@
                     photoUrl: row.photo_url,
                     createdAt: row.created_at
                 }));
-                this.renderCalendar();
-                this.renderStats();
-                this.renderWeeklyCalendar();
+                                        this.renderStats();
+                        this.renderWeeklyCalendar();
             }
 
             // 로컬 스토리지 관련 제거
@@ -905,7 +891,6 @@
                 document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
                 document.getElementById(tabName).classList.add('active');
                 document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-                if (tabName === 'calendar') this.renderCalendar();
                 if (tabName === 'stats') {
                     this.renderStats();
                     this.renderWeeklyCalendar();
@@ -1094,7 +1079,6 @@
                         document.getElementById('photoPreview').innerHTML = '';
                         alert('운동이 성공적으로 등록되었습니다! (로컬 모드)');
                         
-                        this.renderCalendar();
                         this.renderStats();
                         this.renderWeeklyCalendar();
                         return;
@@ -1275,122 +1259,7 @@
                 });
             }
 
-            renderCalendar() {
-                const currentMonth = document.getElementById('currentMonth');
-                const calendarGrid = document.getElementById('calendarGrid');
-                const year = this.currentDate.getFullYear();
-                const month = this.currentDate.getMonth();
-                currentMonth.textContent = `${year}년 ${month + 1}월`;
 
-                const firstDay = new Date(year, month, 1);
-                const startDate = new Date(firstDay);
-                startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-                calendarGrid.innerHTML = '';
-                for (let i = 0; i < 42; i++) {
-                    const date = new Date(startDate);
-                    date.setDate(startDate.getDate() + i);
-                    const yyyy = date.getFullYear();
-                    const mm = String(date.getMonth() + 1).padStart(2, '0');
-                    const dd = String(date.getDate()).padStart(2, '0');
-                    const key = `${yyyy}-${mm}-${dd}`;
-
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'calendar-day';
-                    if (date.getMonth() !== month) dayElement.classList.add('other-month');
-                    dayElement.textContent = date.getDate();
-
-                    const dayWorkouts = this.workouts.filter(w => w.date === key);
-                    if (dayWorkouts.length > 0) {
-                        dayElement.classList.add('has-workout');
-                        dayElement.style.cursor = 'pointer';
-
-                        // 멤버별 색상 점 표시 (최대 4개까지만 표시)
-                        const uniqueMembers = Array.from(new Set(dayWorkouts.map(w => w.memberId)));
-                        uniqueMembers.slice(0, 4).forEach((memberId, idx) => {
-                            const member = this.members.find(m => m.id === memberId);
-                            if (member) {
-                                const indicator = document.createElement('div');
-                                indicator.className = 'workout-indicator';
-                                indicator.style.backgroundColor = member.color;
-                                indicator.style.right = `${5 + idx * 10}px`;
-                                dayElement.appendChild(indicator);
-                            }
-                        });
-
-                        dayElement.addEventListener('click', () => this.showWorkoutDetails(date));
-                    }
-
-                    calendarGrid.appendChild(dayElement);
-                }
-            }
-
-            showWorkoutDetails(date) {
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                const key = `${yyyy}-${mm}-${dd}`;
-                const dayWorkouts = this.workouts.filter(w => w.date === key);
-                if (dayWorkouts.length === 0) return;
-                
-                // 모달 열릴 때마다 이전/다음 버튼 초기화
-                document.getElementById('prevWorkoutBtn').style.display = 'none';
-                document.getElementById('nextWorkoutBtn').style.display = 'none';
-
-                // 해당 날짜의 모든 운동 사진을 보여주는 모달
-                const modalTitle = document.getElementById('modalTitle');
-                const modalImage = document.getElementById('modalImage');
-                const modalInfo = document.getElementById('modalInfo');
-                
-                if (dayWorkouts.length === 1) {
-                    // 운동이 하나인 경우
-                    const workout = dayWorkouts[0];
-                    const member = this.members.find(m => m.id === workout.memberId);
-                    modalTitle.textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
-                    modalImage.src = workout.photoUrl;
-                    modalInfo.textContent = `${key}에 등록된 운동입니다.`;
-                    
-                    // 단일 운동일 때는 이전/다음 버튼 숨김
-                    document.getElementById('prevWorkoutBtn').style.display = 'none';
-                    document.getElementById('nextWorkoutBtn').style.display = 'none';
-                } else {
-                    // 운동이 여러 개인 경우
-                    modalTitle.textContent = `${key} 운동 기록 (${dayWorkouts.length}개)`;
-                    
-                    // 여러 운동 사진을 순차적으로 보여주는 기능
-                    let currentIndex = 0;
-                    const showWorkout = (index) => {
-                        const workout = dayWorkouts[index];
-                        const member = this.members.find(m => m.id === workout.memberId);
-                        modalImage.src = workout.photoUrl;
-                        modalInfo.innerHTML = `
-                            <strong>${member ? member.nickname : '알 수 없음'}</strong>의 운동<br>
-                            ${index + 1} / ${dayWorkouts.length}
-                        `;
-                    };
-                    
-                    showWorkout(0);
-                    
-                    // 이전/다음 버튼 표시 및 이벤트 설정
-                    const prevBtn = document.getElementById('prevWorkoutBtn');
-                    const nextBtn = document.getElementById('nextWorkoutBtn');
-                    
-                    prevBtn.style.display = 'inline-block';
-                    nextBtn.style.display = 'inline-block';
-                    
-                    prevBtn.onclick = () => {
-                        currentIndex = (currentIndex - 1 + dayWorkouts.length) % dayWorkouts.length;
-                        showWorkout(currentIndex);
-                    };
-                    
-                    nextBtn.onclick = () => {
-                        currentIndex = (currentIndex + 1) % dayWorkouts.length;
-                        showWorkout(currentIndex);
-                    };
-                }
-                
-                document.getElementById('photoModal').style.display = 'block';
-            }
 
             async deleteMember(memberId, providedPin) {
                 if (confirm('정말로 이 멤버를 삭제하시겠습니까? 관련된 모든 운동 기록도 함께 삭제됩니다.')) {
@@ -1412,12 +1281,43 @@
                             return;
                         }
 
+                        // 먼저 해당 멤버의 모든 운동 사진을 Storage에서 삭제
+                        const { data: workoutsToDelete, error: fetchWorkoutsErr } = await supabase
+                            .from('workouts')
+                            .select('photo_url')
+                            .eq('member_id', memberId);
+                        
+                        if (fetchWorkoutsErr) throw fetchWorkoutsErr;
+                        
+                        // Storage에서 사진 파일들 삭제
+                        if (workoutsToDelete && workoutsToDelete.length > 0) {
+                            for (const workout of workoutsToDelete) {
+                                if (workout.photo_url) {
+                                    // URL에서 파일 경로 추출 (예: https://.../workouts/2025-01-20/123456_image.jpg)
+                                    const urlParts = workout.photo_url.split('/workouts/');
+                                    if (urlParts.length > 1) {
+                                        const filePath = urlParts[1];
+                                        const { error: storageDeleteErr } = await supabase
+                                            .storage
+                                            .from('workouts')
+                                            .remove([filePath]);
+                                        
+                                        if (storageDeleteErr) {
+                                            console.warn('Storage 파일 삭제 실패:', filePath, storageDeleteErr);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 운동 기록 삭제
                         const { error: delWorkoutsErr } = await supabase
                             .from('workouts')
                             .delete()
                             .eq('member_id', memberId);
                         if (delWorkoutsErr) throw delWorkoutsErr;
 
+                        // 멤버 삭제
                         const { error: delMemberErr } = await supabase
                             .from('members')
                             .delete()
