@@ -4,7 +4,504 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitKyung - 운동 관리 플랫폼</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .main-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 2rem;
+        }
+
+        .primary-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .primary-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .secondary-btn {
+            padding: 12px 24px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .member-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .member-form input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .members-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .member-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .member-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .member-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+        }
+
+        .workout-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .photo-preview {
+            margin-top: 15px;
+            max-width: 300px;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .calendar-controls span {
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .calendar-view {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: white;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #e9ecef;
+        }
+
+        .calendar-day.has-workout {
+            background: #667eea;
+            color: white;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+        }
+
+        .workout-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        #modalImage {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .stats-overview h3, .member-stats h3, .weekly-stats h3 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .member-stats-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .member-stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .member-stat-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .member-stat-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .member-stat-info {
+            flex: 1;
+        }
+
+        .member-stat-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .member-stat-count {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .weekly-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .weekly-calendar .calendar-day {
+            aspect-ratio: 1;
+            background: white;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .weekly-calendar .calendar-day:hover {
+            background: #e9ecef;
+        }
+
+        .weekly-calendar .calendar-day.has-workout {
+            background: #667eea;
+            color: white;
+        }
+
+        .stats-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stats-controls span {
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .member-card .secondary-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .main-nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .member-form {
+                flex-direction: column;
+            }
+            
+            .calendar-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .member-stats-list {
+                grid-template-columns: 1fr;
+            }
+
+            .weekly-calendar {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 5px;
+                padding: 15px;
+            }
+
+            .stats-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -17,6 +514,7 @@
             <button class="nav-btn active" data-tab="members">멤버 관리</button>
             <button class="nav-btn" data-tab="add-workout">운동 추가</button>
             <button class="nav-btn" data-tab="calendar">운동 열람</button>
+            <button class="nav-btn" data-tab="stats">현황</button>
         </nav>
 
         <!-- 멤버 관리 탭 -->
@@ -33,7 +531,7 @@
             </div>
 
             <div class="members-list" id="membersList">
-                <!-- 멤버들이 여기에 동적으로 추가됩니다 -->
+                <div class="loading">멤버 목록을 불러오는 중...</div>
             </div>
         </div>
 
@@ -92,6 +590,56 @@
                 </div>
             </div>
         </div>
+
+        <!-- 현황 탭 -->
+        <div id="stats" class="tab-content">
+            <div class="section-header">
+                <h2>운동 현황</h2>
+                <div class="stats-controls">
+                    <button id="prevWeek" class="secondary-btn">◀</button>
+                    <span id="currentWeek">2024년 1월 1주차</span>
+                    <button id="nextWeek" class="secondary-btn">▶</button>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stats-overview">
+                    <h3>전체 통계</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalMembers">0</div>
+                            <div class="stat-label">총 멤버</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalWorkouts">0</div>
+                            <div class="stat-label">총 운동</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="thisWeekWorkouts">0</div>
+                            <div class="stat-label">이번 주</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="thisMonthWorkouts">0</div>
+                            <div class="stat-label">이번 달</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="member-stats">
+                    <h3>멤버별 운동 횟수</h3>
+                    <div class="member-stats-list" id="memberStatsList">
+                        <!-- 멤버별 통계가 여기에 동적으로 생성됩니다 -->
+                    </div>
+                </div>
+                
+                <div class="weekly-stats">
+                    <h3>주별 현황</h3>
+                    <div class="weekly-calendar" id="weeklyCalendar">
+                        <!-- 주별 캘린더가 여기에 동적으로 생성됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 사진 상세보기 모달 -->
@@ -104,6 +652,496 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module">
+        // Firebase SDK (modular) imports
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { 
+            getFirestore, collection, addDoc, serverTimestamp, 
+            onSnapshot, query, where, getDocs, limit, deleteDoc, doc
+        } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { 
+            getStorage, ref, uploadBytes, getDownloadURL 
+        } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js';
+
+        // TODO: 아래 구성값을 본인 Firebase 프로젝트 설정으로 교체하세요
+        // Firebase Console > 프로젝트 설정 > 내 앱 > SDK 설정 및 구성
+        const firebaseConfig = {
+    apiKey: "AIzaSyC96yvTP-bR26F8OwKTNSs-MHyxlFiMD90",
+    authDomain: "fit-kyung.firebaseapp.com",
+    projectId: "fit-kyung",
+    storageBucket: "fit-kyung.firebasestorage.app",
+    messagingSenderId: "45338889698",
+    appId: "1:45338889698:web:5d2e0115a4b87e4d70bdbb",
+    measurementId: "G-8W3F2NMPP4"
+  };
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        class FitKyungApp {
+            constructor() {
+                this.members = [];
+                this.workouts = [];
+                this.currentDate = new Date();
+                this.memberColors = [
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                    '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
+                    '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
+                ];
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setupFirestoreListeners();
+                this.renderMembers();
+                this.renderCalendar();
+                this.updateMemberSelect();
+                this.renderStats(); // 현황 탭 초기화
+                this.renderWeeklyCalendar(); // 주별 캘린더 초기화
+            }
+
+            setupFirestoreListeners() {
+                // 멤버 실시간 구독
+                onSnapshot(collection(db, 'members'), (snapshot) => {
+                    this.members = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.renderMembers();
+                    this.updateMemberSelect();
+                    this.renderCalendar();
+                    this.renderStats(); // 멤버 변경 시 통계 다시 렌더링
+                });
+
+                // 운동 실시간 구독
+                onSnapshot(collection(db, 'workouts'), (snapshot) => {
+                    this.workouts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.renderCalendar();
+                    this.renderStats(); // 운동 변경 시 통계 다시 렌더링
+                    this.renderWeeklyCalendar(); // 운동 변경 시 주별 캘린더 다시 렌더링
+                });
+            }
+
+            setupEventListeners() {
+                // 탭 전환
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+
+                // 멤버 추가
+                document.getElementById('addMemberBtn').addEventListener('click', () => {
+                    document.getElementById('memberForm').style.display = 'flex';
+                });
+
+                document.getElementById('saveMemberBtn').addEventListener('click', () => {
+                    this.addMember();
+                });
+
+                document.getElementById('cancelMemberBtn').addEventListener('click', () => {
+                    document.getElementById('memberForm').style.display = 'none';
+                    document.getElementById('nickname').value = '';
+                });
+
+                // 운동 추가
+                document.getElementById('workoutForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addWorkout();
+                });
+
+                // 사진 미리보기
+                document.getElementById('workoutPhoto').addEventListener('change', (e) => {
+                    this.previewPhoto(e.target.files[0]);
+                });
+
+                // 캘린더 네비게이션
+                document.getElementById('prevMonth').addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                    this.renderCalendar();
+                    this.renderWeeklyCalendar(); // 캘린더 변경 시 주별 캘린더 다시 렌더링
+                });
+
+                document.getElementById('nextMonth').addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                    this.renderCalendar();
+                    this.renderWeeklyCalendar(); // 캘린더 변경 시 주별 캘린더 다시 렌더링
+                });
+
+                // 주별 네비게이션
+                document.getElementById('prevWeek').addEventListener('click', () => {
+                    this.currentDate.setDate(this.currentDate.getDate() - 7);
+                    this.renderWeeklyCalendar();
+                });
+
+                document.getElementById('nextWeek').addEventListener('click', () => {
+                    this.currentDate.setDate(this.currentDate.getDate() + 7);
+                    this.renderWeeklyCalendar();
+                });
+
+                // 모달 닫기
+                document.querySelector('.close').addEventListener('click', () => {
+                    document.getElementById('photoModal').style.display = 'none';
+                });
+
+                window.addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('photoModal')) {
+                        document.getElementById('photoModal').style.display = 'none';
+                    }
+                });
+            }
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                if (tabName === 'calendar') this.renderCalendar();
+                if (tabName === 'stats') {
+                    this.renderStats();
+                    this.renderWeeklyCalendar();
+                }
+            }
+
+            async addMember() {
+                const nickname = document.getElementById('nickname').value.trim();
+                if (!nickname) {
+                    alert('닉네임을 입력해주세요.');
+                    return;
+                }
+
+                // 중복 닉네임 체크
+                const dupQ = query(collection(db, 'members'), where('nickname', '==', nickname), limit(1));
+                const dupSnap = await getDocs(dupQ);
+                if (!dupSnap.empty) {
+                    alert('이미 존재하는 닉네임입니다.');
+                    return;
+                }
+
+                const member = {
+                    nickname,
+                    color: this.memberColors[this.members.length % this.memberColors.length],
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, 'members'), member);
+
+                document.getElementById('memberForm').style.display = 'none';
+                document.getElementById('nickname').value = '';
+                alert('멤버가 성공적으로 등록되었습니다!');
+            }
+
+            async addWorkout() {
+                const memberId = document.getElementById('memberSelect').value;
+                const date = document.getElementById('workoutDate').value; // YYYY-MM-DD
+                const photoFile = document.getElementById('workoutPhoto').files[0];
+
+                if (!memberId || !date || !photoFile) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                // 사진 업로드 → URL 발급 → Firestore 문서 추가
+                const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+                const objectPath = `workouts/${date}/${Date.now()}_${safeName}`;
+                const storageRef = ref(storage, objectPath);
+                await uploadBytes(storageRef, photoFile);
+                const photoUrl = await getDownloadURL(storageRef);
+
+                const workout = {
+                    memberId,
+                    date, // YYYY-MM-DD
+                    photoUrl,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, 'workouts'), workout);
+
+                // 폼 초기화
+                document.getElementById('workoutForm').reset();
+                document.getElementById('photoPreview').innerHTML = '';
+                alert('운동이 성공적으로 등록되었습니다!');
+            }
+
+            previewPhoto(file) {
+                const preview = document.getElementById('photoPreview');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="미리보기">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.innerHTML = '';
+                }
+            }
+
+            renderMembers() {
+                const membersList = document.getElementById('membersList');
+                if (this.members.length === 0) {
+                    membersList.innerHTML = '<div class="loading">등록된 멤버가 없습니다.</div>';
+                    return;
+                }
+
+                membersList.innerHTML = '';
+                this.members.forEach(member => {
+                    const memberCard = document.createElement('div');
+                    memberCard.className = 'member-card';
+                    memberCard.innerHTML = `
+                        <div class="member-color" style="background-color: ${member.color}"></div>
+                        <h3>${member.nickname}</h3>
+                        <button class="secondary-btn delete-member-btn" data-member-id="${member.id}">삭제</button>
+                    `;
+                    membersList.appendChild(memberCard);
+                });
+
+                // 삭제 버튼 이벤트 리스너 추가
+                document.querySelectorAll('.delete-member-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const memberId = btn.dataset.memberId;
+                        this.deleteMember(memberId);
+                    });
+                });
+            }
+
+            updateMemberSelect() {
+                const memberSelect = document.getElementById('memberSelect');
+                memberSelect.innerHTML = '<option value="">멤버를 선택하세요</option>';
+                this.members.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    option.textContent = member.nickname;
+                    memberSelect.appendChild(option);
+                });
+            }
+
+            renderCalendar() {
+                const currentMonth = document.getElementById('currentMonth');
+                const calendarGrid = document.getElementById('calendarGrid');
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth();
+                currentMonth.textContent = `${year}년 ${month + 1}월`;
+
+                const firstDay = new Date(year, month, 1);
+                const startDate = new Date(firstDay);
+                startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+                calendarGrid.innerHTML = '';
+                for (let i = 0; i < 42; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const key = `${yyyy}-${mm}-${dd}`;
+
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    if (date.getMonth() !== month) dayElement.classList.add('other-month');
+                    dayElement.textContent = date.getDate();
+
+                    const dayWorkouts = this.workouts.filter(w => w.date === key);
+                    if (dayWorkouts.length > 0) {
+                        dayElement.classList.add('has-workout');
+                        dayElement.style.cursor = 'pointer';
+
+                        // 멤버별 색상 점 표시 (최대 4개까지만 표시)
+                        const uniqueMembers = Array.from(new Set(dayWorkouts.map(w => w.memberId)));
+                        uniqueMembers.slice(0, 4).forEach((memberId, idx) => {
+                            const member = this.members.find(m => m.id === memberId);
+                            if (member) {
+                                const indicator = document.createElement('div');
+                                indicator.className = 'workout-indicator';
+                                indicator.style.backgroundColor = member.color;
+                                indicator.style.right = `${5 + idx * 10}px`;
+                                dayElement.appendChild(indicator);
+                            }
+                        });
+
+                        dayElement.addEventListener('click', () => this.showWorkoutDetails(date));
+                    }
+
+                    calendarGrid.appendChild(dayElement);
+                }
+            }
+
+            showWorkoutDetails(date) {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const key = `${yyyy}-${mm}-${dd}`;
+                const dayWorkouts = this.workouts.filter(w => w.date === key);
+                if (dayWorkouts.length === 0) return;
+
+                // 첫 번째 운동 기준으로 표시 (필요시 리스트 UI로 확장 가능)
+                const workout = dayWorkouts[0];
+                const member = this.members.find(m => m.id === workout.memberId);
+                document.getElementById('modalTitle').textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
+                document.getElementById('modalImage').src = workout.photoUrl;
+                document.getElementById('modalInfo').textContent = `${key}에 등록된 운동입니다.`;
+                document.getElementById('photoModal').style.display = 'block';
+            }
+
+            async deleteMember(memberId) {
+                if (confirm('정말로 이 멤버를 삭제하시겠습니까? 관련된 모든 운동 기록도 함께 삭제됩니다.')) {
+                    try {
+                        // 해당 멤버의 운동 기록도 함께 삭제
+                        const memberWorkouts = this.workouts.filter(w => w.memberId === memberId);
+                        for (const workout of memberWorkouts) {
+                            await deleteDoc(doc(db, 'workouts', workout.id));
+                        }
+                        
+                        // 멤버 삭제
+                        await deleteDoc(doc(db, 'members', memberId));
+                        alert('멤버와 관련 운동 기록이 성공적으로 삭제되었습니다.');
+                    } catch (error) {
+                        console.error('멤버 삭제 중 오류 발생:', error);
+                        alert('멤버 삭제 중 오류가 발생했습니다.');
+                    }
+                }
+            }
+
+            renderStats() {
+                this.updateTotalStats();
+                this.renderMemberStats();
+            }
+
+            updateTotalStats() {
+                const totalMembers = document.getElementById('totalMembers');
+                const totalWorkouts = document.getElementById('totalWorkouts');
+                const thisWeekWorkouts = document.getElementById('thisWeekWorkouts');
+                const thisMonthWorkouts = document.getElementById('thisMonthWorkouts');
+
+                totalMembers.textContent = this.members.length;
+                totalWorkouts.textContent = this.workouts.length;
+
+                // 이번 주 운동 수 계산
+                const now = new Date();
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - now.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+
+                const workoutsThisWeek = this.workouts.filter(w => {
+                    const workoutDate = new Date(w.date);
+                    return workoutDate >= weekStart && workoutDate <= weekEnd;
+                });
+                thisWeekWorkouts.textContent = workoutsThisWeek.length;
+
+                // 이번 달 운동 수 계산
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                monthEnd.setHours(23, 59, 59, 999);
+
+                const workoutsThisMonth = this.workouts.filter(w => {
+                    const workoutDate = new Date(w.date);
+                    return workoutDate >= monthStart && workoutDate <= monthEnd;
+                });
+                thisMonthWorkouts.textContent = workoutsThisMonth.length;
+            }
+
+            renderMemberStats() {
+                const memberStatsList = document.getElementById('memberStatsList');
+                
+                if (this.members.length === 0) {
+                    memberStatsList.innerHTML = '<div class="loading">등록된 멤버가 없습니다.</div>';
+                    return;
+                }
+
+                memberStatsList.innerHTML = '';
+                
+                // 멤버별 운동 횟수 계산
+                const memberStats = this.members.map(member => {
+                    const workoutCount = this.workouts.filter(w => w.memberId === member.id).length;
+                    return {
+                        ...member,
+                        workoutCount
+                    };
+                });
+
+                // 운동 횟수 순으로 정렬
+                memberStats.sort((a, b) => b.workoutCount - a.workoutCount);
+
+                memberStats.forEach(memberStat => {
+                    const statCard = document.createElement('div');
+                    statCard.className = 'member-stat-card';
+                    statCard.innerHTML = `
+                        <div class="member-stat-color" style="background-color: ${memberStat.color}"></div>
+                        <div class="member-stat-info">
+                            <div class="member-stat-name">${memberStat.nickname}</div>
+                            <div class="member-stat-count">${memberStat.workoutCount}회</div>
+                        </div>
+                    `;
+                    memberStatsList.appendChild(statCard);
+                });
+            }
+
+            renderWeeklyCalendar() {
+                const currentWeek = document.getElementById('currentWeek');
+                const weeklyCalendar = document.getElementById('weeklyCalendar');
+                
+                // 현재 주의 시작일 (월요일) 계산
+                const now = new Date();
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+                weekStart.setHours(0, 0, 0, 0);
+
+                const year = weekStart.getFullYear();
+                const month = weekStart.getMonth() + 1;
+                const week = Math.ceil((weekStart.getDate() + 6) / 7);
+                
+                currentWeek.textContent = `${year}년 ${month}월 ${week}주차`;
+
+                weeklyCalendar.innerHTML = '';
+                
+                // 일주일 표시
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(weekStart);
+                    day.setDate(weekStart.getDate() + i);
+                    
+                    const yyyy = day.getFullYear();
+                    const mm = String(day.getMonth() + 1).padStart(2, '0');
+                    const dd = String(day.getDate()).padStart(2, '0');
+                    const key = `${yyyy}-${mm}-${dd}`;
+
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    dayElement.textContent = `${day.getDate()}`;
+
+                    const dayWorkouts = this.workouts.filter(w => w.date === key);
+                    if (dayWorkouts.length > 0) {
+                        dayElement.classList.add('has-workout');
+                        dayElement.style.cursor = 'pointer';
+
+                        // 멤버별 색상 점 표시
+                        const uniqueMembers = Array.from(new Set(dayWorkouts.map(w => w.memberId)));
+                        uniqueMembers.slice(0, 4).forEach((memberId, idx) => {
+                            const member = this.members.find(m => m.id === memberId);
+                            if (member) {
+                                const indicator = document.createElement('div');
+                                indicator.className = 'workout-indicator';
+                                indicator.style.backgroundColor = member.color;
+                                indicator.style.right = `${5 + idx * 10}px`;
+                                dayElement.appendChild(indicator);
+                            }
+                        });
+
+                        dayElement.addEventListener('click', () => this.showWorkoutDetails(day));
+                    }
+
+                    weeklyCalendar.appendChild(dayElement);
+                }
+            }
+        }
+
+        // 앱 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new FitKyungApp();
+        });
+    </script>
 </body>
 </html>
