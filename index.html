@@ -1088,7 +1088,7 @@
                     let photoUrl = photoUrlInput;
                     if (!photoUrl && photoFile) {
                         const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-                        const objectPath = `workouts/${date}/${Date.now()}_${safeName}`;
+                        const objectPath = `${date}/${Date.now()}_${safeName}`;
                         console.log('사진 업로드 중...', objectPath);
                         const { error: uploadErr } = await supabase
                             .storage
@@ -1511,7 +1511,7 @@
                     let photoUrl = photoUrlInput;
                     if (!photoUrl && photoFile) {
                         const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-                        const objectPath = `workouts/${date}/${Date.now()}_${safeName}`;
+                        const objectPath = `${date}/${Date.now()}_${safeName}`;
                         console.log('사진 업로드 중...', objectPath);
                         const { error: uploadErr } = await supabase
                             .storage
