@@ -563,10 +563,7 @@
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="workoutDate">운동 날짜:</label>
-                    <input type="date" id="workoutDate" required disabled>
-                </div>
+
                 
                 <div class="form-group">
                     <label for="workoutPhoto">운동 사진 (파일 업로드):</label>
@@ -578,10 +575,7 @@
                 
                 <button type="submit" class="primary-btn">운동 등록</button>
                 
-                <!-- 디버깅용 테스트 버튼 -->
-                <button type="button" id="testWorkoutBtn" class="secondary-btn" style="margin-left: 10px;">
-                    테스트 등록
-                </button>
+
             </form>
         </div>
 
@@ -850,12 +844,7 @@
                     });
                 }
 
-                // 테스트 버튼 이벤트 리스너
-                document.getElementById('testWorkoutBtn').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('테스트 버튼 클릭됨');
-                    this.testWorkoutRegistration();
-                });
+
 
                 // 사진 미리보기
                 document.getElementById('workoutPhoto').addEventListener('change', (e) => {
@@ -921,6 +910,13 @@
                     alert('비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
+                
+                // 비밀번호 확인 요청
+                const confirmPin = prompt('비밀번호를 한 번 더 입력해주세요:');
+                if (confirmPin !== pin) {
+                    alert('비밀번호가 일치하지 않습니다.');
+                    return;
+                }
 
                 console.log('멤버 추가 시작:', nickname);
 
@@ -980,6 +976,7 @@
                     document.getElementById('nickname').value = '';
                     document.getElementById('memberPin').value = '';
                     alert('멤버가 성공적으로 등록되었습니다!');
+                    location.reload();
                     
                 } catch (error) {
                     console.error('멤버 추가 중 오류 발생:', error);
@@ -994,6 +991,25 @@
                 const date = new Date().toISOString().slice(0,10); // 오늘 날짜 고정 YYYY-MM-DD
                 const photoFile = document.getElementById('workoutPhoto').files[0];
                 const photoUrlInput = '';
+                
+                // 운동 등록 시 비밀번호 요청
+                const pin = prompt('운동 등록을 위해 비밀번호를 입력해주세요:');
+                if (!pin || !/^\d{4}$/.test(pin)) {
+                    alert('비밀번호는 숫자 4자리여야 합니다.');
+                    return;
+                }
+                
+                // 선택된 멤버의 비밀번호 확인
+                const selectedMember = this.members.find(m => m.id === memberId);
+                if (!selectedMember) {
+                    alert('선택한 멤버를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                if (selectedMember.pin !== pin) {
+                    alert('비밀번호가 올바르지 않습니다.');
+                    return;
+                }
 
                 console.log('운동 추가 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
 
@@ -1013,14 +1029,6 @@
                 if (!photoFile && !photoUrlInput) {
                     alert('운동 사진 파일을 선택하거나 사진 URL을 입력해주세요.');
                     console.log('사진 소스 누락');
-                    return;
-                }
-
-                // 멤버 존재 여부 확인
-                const selectedMember = this.members.find(m => m.id === memberId);
-                if (!selectedMember) {
-                    alert('선택한 멤버를 찾을 수 없습니다.');
-                    console.log('선택한 멤버 없음:', memberId);
                     return;
                 }
 
@@ -1103,6 +1111,7 @@
                     document.getElementById('workoutForm').reset();
                     document.getElementById('photoPreview').innerHTML = '';
                     alert('운동이 성공적으로 등록되었습니다!');
+                    location.reload();
                     
                 } catch (error) {
                     console.error('운동 추가 중 오류 발생:', error);
@@ -1234,12 +1243,62 @@
                 const dayWorkouts = this.workouts.filter(w => w.date === key);
                 if (dayWorkouts.length === 0) return;
 
-                // 첫 번째 운동 기준으로 표시 (필요시 리스트 UI로 확장 가능)
-                const workout = dayWorkouts[0];
-                const member = this.members.find(m => m.id === workout.memberId);
-                document.getElementById('modalTitle').textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
-                document.getElementById('modalImage').src = workout.photoUrl;
-                document.getElementById('modalInfo').textContent = `${key}에 등록된 운동입니다.`;
+                // 해당 날짜의 모든 운동 사진을 보여주는 모달
+                const modalTitle = document.getElementById('modalTitle');
+                const modalImage = document.getElementById('modalImage');
+                const modalInfo = document.getElementById('modalInfo');
+                
+                if (dayWorkouts.length === 1) {
+                    // 운동이 하나인 경우
+                    const workout = dayWorkouts[0];
+                    const member = this.members.find(m => m.id === workout.memberId);
+                    modalTitle.textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
+                    modalImage.src = workout.photoUrl;
+                    modalInfo.textContent = `${key}에 등록된 운동입니다.`;
+                } else {
+                    // 운동이 여러 개인 경우
+                    modalTitle.textContent = `${key} 운동 기록 (${dayWorkouts.length}개)`;
+                    
+                    // 여러 운동 사진을 순차적으로 보여주는 기능
+                    let currentIndex = 0;
+                    const showWorkout = (index) => {
+                        const workout = dayWorkouts[index];
+                        const member = this.members.find(m => m.id === workout.memberId);
+                        modalImage.src = workout.photoUrl;
+                        modalInfo.innerHTML = `
+                            <strong>${member ? member.nickname : '알 수 없음'}</strong>의 운동<br>
+                            ${index + 1} / ${dayWorkouts.length}
+                        `;
+                    };
+                    
+                    showWorkout(0);
+                    
+                    // 이전/다음 버튼 추가
+                    const prevBtn = document.createElement('button');
+                    prevBtn.textContent = '◀ 이전';
+                    prevBtn.className = 'secondary-btn';
+                    prevBtn.style.marginRight = '10px';
+                    prevBtn.onclick = () => {
+                        currentIndex = (currentIndex - 1 + dayWorkouts.length) % dayWorkouts.length;
+                        showWorkout(currentIndex);
+                    };
+                    
+                    const nextBtn = document.createElement('button');
+                    nextBtn.textContent = '다음 ▶';
+                    nextBtn.className = 'secondary-btn';
+                    nextBtn.onclick = () => {
+                        currentIndex = (currentIndex + 1) % dayWorkouts.length;
+                        showWorkout(currentIndex);
+                    };
+                    
+                    // 기존 버튼들 제거 후 새로 추가
+                    const existingButtons = modalInfo.querySelectorAll('button');
+                    existingButtons.forEach(btn => btn.remove());
+                    
+                    modalInfo.appendChild(prevBtn);
+                    modalInfo.appendChild(nextBtn);
+                }
+                
                 document.getElementById('photoModal').style.display = 'block';
             }
 
@@ -1275,6 +1334,7 @@
                             .eq('id', memberId);
                         if (delMemberErr) throw delMemberErr;
                         alert('멤버와 관련 운동 기록이 성공적으로 삭제되었습니다.');
+                        location.reload();
                     } catch (error) {
                         console.error('멤버 삭제 중 오류 발생:', error);
                         alert('멤버 삭제 중 오류가 발생했습니다.');
@@ -1417,129 +1477,6 @@
                 }
             }
 
-            async testWorkoutRegistration() {
-                console.log('testWorkoutRegistration 함수 호출됨');
-                
-                // 실제 폼 데이터 가져오기
-                const memberId = document.getElementById('memberSelect').value;
-                const date = new Date().toISOString().slice(0,10);
-                const photoFile = document.getElementById('workoutPhoto').files[0];
-                const photoUrlInput = '';
-
-                console.log('테스트 운동 등록 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
-
-                // 상세한 유효성 검사
-                if (!memberId) {
-                    alert('멤버를 선택해주세요.');
-                    console.log('멤버 선택 누락');
-                    return;
-                }
-                
-                if (!date) {
-                    alert('운동 날짜를 선택해주세요.');
-                    console.log('날짜 선택 누락');
-                    return;
-                }
-                
-                if (!photoFile && !photoUrlInput) {
-                    alert('운동 사진 파일을 선택하거나 사진 URL을 입력해주세요.');
-                    console.log('사진 소스 누락');
-                    return;
-                }
-
-                // 멤버 존재 여부 확인
-                const selectedMember = this.members.find(m => m.id === memberId);
-                if (!selectedMember) {
-                    alert('선택한 멤버를 찾을 수 없습니다.');
-                    console.log('선택한 멤버 없음:', memberId);
-                    return;
-                }
-
-                console.log('선택된 멤버:', selectedMember);
-
-                if (this.useLocalStorage) {
-                    // 로컬 스토리지 모드
-                    try {
-                        console.log('로컬 모드로 테스트 운동 추가 중...');
-                        
-                        // photoUrl 결정: URL 입력이 우선, 없으면 파일을 Base64로 변환
-                        let photoUrl = photoUrlInput;
-                        if (!photoUrl && photoFile) {
-                            photoUrl = await this.fileToBase64(photoFile);
-                        }
-                        
-                        const workout = {
-                            id: Date.now().toString(),
-                            memberId,
-                            date,
-                            photoUrl,
-                            createdAt: new Date().toISOString()
-                        };
-
-                        console.log('생성할 운동 데이터:', workout);
-                        this.workouts.push(workout);
-                        this.saveLocalData();
-                        
-                        // 폼 초기화
-                        document.getElementById('workoutForm').reset();
-                        document.getElementById('photoPreview').innerHTML = '';
-                        alert('테스트 운동이 성공적으로 등록되었습니다! (로컬 모드)');
-                        
-                        this.renderCalendar();
-                        this.renderStats();
-                        this.renderWeeklyCalendar();
-                        return;
-                        
-                    } catch (error) {
-                        console.error('로컬 모드 테스트 운동 추가 중 오류:', error);
-                        alert('테스트 운동 등록에 실패했습니다: ' + error.message);
-                        return;
-                    }
-                }
-
-                // Supabase 모드
-                try {
-                    console.log('Supabase 모드로 테스트 운동 추가 중...');
-                    
-                    let photoUrl = photoUrlInput;
-                    if (!photoUrl && photoFile) {
-                        const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-                        const objectPath = `${date}/${Date.now()}_${safeName}`;
-                        console.log('사진 업로드 중...', objectPath);
-                        const { error: uploadErr } = await supabase
-                            .storage
-                            .from('workouts')
-                            .upload(objectPath, photoFile, { contentType: photoFile.type });
-                        if (uploadErr) throw uploadErr;
-
-                        const { data: publicUrlData } = supabase
-                            .storage
-                            .from('workouts')
-                            .getPublicUrl(objectPath);
-                        photoUrl = publicUrlData.publicUrl;
-                    }
-
-                    const workout = {
-                        member_id: memberId,
-                        date, // YYYY-MM-DD
-                        photo_url: photoUrl,
-                        created_at: new Date().toISOString()
-                    };
-
-                    console.log('운동 데이터 생성 완료, DB에 저장 중...');
-                    const { error: insertErr } = await supabase.from('workouts').insert(workout);
-                    if (insertErr) throw insertErr;
-
-                    // 폼 초기화
-                    document.getElementById('workoutForm').reset();
-                    document.getElementById('photoPreview').innerHTML = '';
-                    alert('테스트 운동이 성공적으로 등록되었습니다!');
-                    
-                } catch (error) {
-                    console.error('테스트 운동 추가 중 오류 발생:', error);
-                    alert('테스트 운동 등록에 실패했습니다: ' + (error?.message || error));
-                }
-            }
         }
 
         // 앱 초기화
