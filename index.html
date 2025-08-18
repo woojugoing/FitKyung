@@ -687,7 +687,7 @@
     apiKey: "AIzaSyC96yvTP-bR26F8OwKTNSs-MHyxlFiMD90",
     authDomain: "fit-kyung.firebaseapp.com",
     projectId: "fit-kyung",
-    storageBucket: "fit-kyung.firebasestorage.app",
+    storageBucket: "fit-kyung.appspot.com",
     messagingSenderId: "45338889698",
     appId: "1:45338889698:web:5d2e0115a4b87e4d70bdbb",
     measurementId: "G-8W3F2NMPP4"
@@ -696,7 +696,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
+        const storage = getStorage(app, "gs://fit-kyung.appspot.com");
 
         // Firebase 연결 상태 확인
         console.log('Firebase 초기화 완료:', app);
