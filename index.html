@@ -519,7 +519,7 @@
             <h1>FitKyung</h1>
             <p class="subtitle">함께하는 운동 관리 플랫폼</p>
             <div id="connectionStatus" class="connection-status">
-                <span id="statusText">Firebase 연결 중...</span>
+                <span id="statusText">Supabase 연결 중...</span>
             </div>
         </header>
 
@@ -676,37 +676,13 @@
     </div>
 
     <script type="module">
-        // Firebase SDK (modular) imports
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { 
-            getFirestore, collection, addDoc, serverTimestamp, 
-            onSnapshot, query, where, getDocs, limit, deleteDoc, doc
-        } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
-        import { 
-            getStorage, ref, uploadBytes, getDownloadURL 
-        } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js';
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-        // TODO: 아래 구성값을 본인 Firebase 프로젝트 설정으로 교체하세요
-        // Firebase Console > 프로젝트 설정 > 내 앱 > SDK 설정 및 구성
-        const firebaseConfig = {
-    apiKey: "AIzaSyC96yvTP-bR26F8OwKTNSs-MHyxlFiMD90",
-    authDomain: "fit-kyung.firebaseapp.com",
-    projectId: "fit-kyung",
-    storageBucket: "fit-kyung.appspot.com",
-    messagingSenderId: "45338889698",
-    appId: "1:45338889698:web:5d2e0115a4b87e4d70bdbb",
-    measurementId: "G-8W3F2NMPP4"
-  };
-
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app, "gs://fit-kyung.appspot.com");
-
-        // Firebase 연결 상태 확인
-        console.log('Firebase 초기화 완료:', app);
-        console.log('Firestore 데이터베이스:', db);
-        console.log('Storage:', storage);
+        // Supabase 프로젝트 설정값 (필요시 localStorage 키로 주입 가능)
+        const supabaseUrl = 'https://toywbublicatyeapdfmc.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRveXdiYnVsaWNhdHllYXBkZm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQxNjU5NjEsImV4cCI6MjAzOTc0MTk2MX0.0-0000000000000000000000000000000000000000000000000000000000000000'
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        console.log('Supabase 클라이언트 초기화 완료');
 
         class FitKyungApp {
             constructor() {
@@ -725,11 +701,11 @@
             init() {
                 this.setupEventListeners();
                 
-                // Firebase 연결 시도
-                this.testFirebaseConnection().then(() => {
-                    this.setupFirestoreListeners();
+                // Supabase 연결 시도
+                this.testSupabaseConnection().then(() => {
+                    this.setupSupabaseListeners();
                 }).catch((error) => {
-                    console.warn('Firebase 연결 실패, 로컬 스토리지 모드로 전환:', error);
+                    console.warn('Supabase 연결 실패, 로컬 스토리지 모드로 전환:', error);
                     this.useLocalStorage = true;
                     this.loadLocalData();
                 });
@@ -741,17 +717,16 @@
                 this.renderWeeklyCalendar();
             }
 
-            async testFirebaseConnection() {
+            async testSupabaseConnection() {
                 try {
-                    // 간단한 Firestore 읽기 테스트
-                    const testQuery = query(collection(db, 'members'), limit(1));
-                    await getDocs(testQuery);
-                    console.log('Firebase 연결 테스트 성공');
-                    this.updateConnectionStatus('Firebase 연결됨', '#d4edda', '#155724');
+                    const { error } = await supabase.from('members').select('id').limit(1);
+                    if (error) throw error;
+                    console.log('Supabase 연결 테스트 성공');
+                    this.updateConnectionStatus('Supabase 연결됨', '#d4edda', '#155724');
                     return true;
                 } catch (error) {
-                    console.error('Firebase 연결 테스트 실패:', error);
-                    this.updateConnectionStatus('로컬 모드 (Firebase 연결 실패)', '#f8d7da', '#721c24');
+                    console.error('Supabase 연결 테스트 실패:', error);
+                    this.updateConnectionStatus('로컬 모드 (Supabase 연결 실패)', '#f8d7da', '#721c24');
                     throw error;
                 }
             }
@@ -767,42 +742,74 @@
                 }
             }
 
-            setupFirestoreListeners() {
+            async setupSupabaseListeners() {
                 if (this.useLocalStorage) return;
-                
-                console.log('Firestore 리스너 설정 시작...');
-                
+                console.log('Supabase 리스너 설정 시작...');
                 try {
-                    // 멤버 실시간 구독
-                    onSnapshot(collection(db, 'members'), (snapshot) => {
-                        console.log('멤버 데이터 변경 감지:', snapshot.docs.length, '개');
-                        this.members = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        this.renderMembers();
-                        this.updateMemberSelect();
-                        this.renderCalendar();
-                        this.renderStats();
-                    }, (error) => {
-                        console.error('멤버 리스너 오류:', error);
-                        alert('멤버 데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
-                    });
+                    await this.loadMembersFromSupabase();
+                    await this.loadWorkoutsFromSupabase();
 
-                    // 운동 실시간 구독
-                    onSnapshot(collection(db, 'workouts'), (snapshot) => {
-                        console.log('운동 데이터 변경 감지:', snapshot.docs.length, '개');
-                        this.workouts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        this.renderCalendar();
-                        this.renderStats();
-                        this.renderWeeklyCalendar();
-                    }, (error) => {
-                        console.error('운동 리스너 오류:', error);
-                        alert('운동 데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
-                    });
-                    
-                    console.log('Firestore 리스너 설정 완료');
+                    this.membersChannel = supabase
+                        .channel('public:members')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, async () => {
+                            await this.loadMembersFromSupabase();
+                        })
+                        .subscribe();
+
+                    this.workoutsChannel = supabase
+                        .channel('public:workouts')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts' }, async () => {
+                            await this.loadWorkoutsFromSupabase();
+                        })
+                        .subscribe();
+
+                    console.log('Supabase 리스너 설정 완료');
                 } catch (error) {
-                    console.error('Firestore 리스너 설정 중 오류:', error);
-                    alert('데이터베이스 연결에 실패했습니다: ' + error.message);
+                    console.error('Supabase 리스너 설정 중 오류:', error);
+                    alert('데이터베이스 연결에 실패했습니다: ' + (error?.message || error));
                 }
+            }
+
+            async loadMembersFromSupabase() {
+                const { data, error } = await supabase
+                    .from('members')
+                    .select('id, nickname, color, created_at')
+                    .order('created_at', { ascending: true });
+                if (error) {
+                    console.error('멤버 로드 오류:', error);
+                    return;
+                }
+                this.members = (data || []).map(row => ({
+                    id: row.id,
+                    nickname: row.nickname,
+                    color: row.color,
+                    createdAt: row.created_at
+                }));
+                this.renderMembers();
+                this.updateMemberSelect();
+                this.renderCalendar();
+                this.renderStats();
+            }
+
+            async loadWorkoutsFromSupabase() {
+                const { data, error } = await supabase
+                    .from('workouts')
+                    .select('id, member_id, date, photo_url, created_at')
+                    .order('created_at', { ascending: true });
+                if (error) {
+                    console.error('운동 로드 오류:', error);
+                    return;
+                }
+                this.workouts = (data || []).map(row => ({
+                    id: row.id,
+                    memberId: row.member_id,
+                    date: row.date,
+                    photoUrl: row.photo_url,
+                    createdAt: row.created_at
+                }));
+                this.renderCalendar();
+                this.renderStats();
+                this.renderWeeklyCalendar();
             }
 
             // 로컬 스토리지 관련 메서드들
@@ -961,30 +968,29 @@
                     return;
                 }
 
-                // Firebase 모드
+                // Supabase 모드
                 try {
-                    // 중복 닉네임 체크
                     console.log('중복 닉네임 체크 중...');
-                    const dupQ = query(collection(db, 'members'), where('nickname', '==', nickname), limit(1));
-                    const dupSnap = await getDocs(dupQ);
-                    
-                    if (!dupSnap.empty) {
+                    const { data: dupList, error: dupErr } = await supabase
+                        .from('members')
+                        .select('id')
+                        .eq('nickname', nickname)
+                        .limit(1);
+                    if (dupErr) throw dupErr;
+                    if (dupList && dupList.length > 0) {
                         alert('이미 존재하는 닉네임입니다.');
                         return;
                     }
 
-                    console.log('중복 체크 완료, 멤버 생성 중...');
-
                     const member = {
                         nickname,
                         color: this.memberColors[this.members.length % this.memberColors.length],
-                        createdAt: serverTimestamp()
+                        created_at: new Date().toISOString()
                     };
 
                     console.log('생성할 멤버 데이터:', member);
-
-                    const docRef = await addDoc(collection(db, 'members'), member);
-                    console.log('멤버 추가 성공! 문서 ID:', docRef.id);
+                    const { error: insertErr } = await supabase.from('members').insert(member);
+                    if (insertErr) throw insertErr;
 
                     document.getElementById('memberForm').style.display = 'none';
                     document.getElementById('nickname').value = '';
@@ -992,7 +998,7 @@
                     
                 } catch (error) {
                     console.error('멤버 추가 중 오류 발생:', error);
-                    alert('멤버 등록에 실패했습니다: ' + error.message);
+                    alert('멤버 등록에 실패했습니다: ' + (error?.message || error));
                 }
             }
 
@@ -1075,34 +1081,38 @@
                     }
                 }
 
-                // Firebase 모드
+                // Supabase 모드
                 try {
-                    console.log('Firebase 모드로 운동 추가 중...');
+                    console.log('Supabase 모드로 운동 추가 중...');
                     
-                    // photoUrl 결정: URL 입력이 있으면 그대로 사용, 없으면 업로드
                     let photoUrl = photoUrlInput;
                     if (!photoUrl && photoFile) {
                         const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const objectPath = `workouts/${date}/${Date.now()}_${safeName}`;
-                        const storageRef = ref(storage, objectPath);
-                        
                         console.log('사진 업로드 중...', objectPath);
-                        await uploadBytes(storageRef, photoFile);
-                        
-                        console.log('사진 업로드 완료, URL 가져오는 중...');
-                        photoUrl = await getDownloadURL(storageRef);
+                        const { error: uploadErr } = await supabase
+                            .storage
+                            .from('workouts')
+                            .upload(objectPath, photoFile, { contentType: photoFile.type });
+                        if (uploadErr) throw uploadErr;
+
+                        const { data: publicUrlData } = supabase
+                            .storage
+                            .from('workouts')
+                            .getPublicUrl(objectPath);
+                        photoUrl = publicUrlData.publicUrl;
                     }
 
                     const workout = {
-                        memberId,
+                        member_id: memberId,
                         date, // YYYY-MM-DD
-                        photoUrl,
-                        createdAt: serverTimestamp()
+                        photo_url: photoUrl,
+                        created_at: new Date().toISOString()
                     };
 
-                    console.log('운동 데이터 생성 완료, Firestore에 저장 중...');
-                    const docRef = await addDoc(collection(db, 'workouts'), workout);
-                    console.log('운동 추가 성공! 문서 ID:', docRef.id);
+                    console.log('운동 데이터 생성 완료, DB에 저장 중...');
+                    const { error: insertErr } = await supabase.from('workouts').insert(workout);
+                    if (insertErr) throw insertErr;
 
                     // 폼 초기화
                     document.getElementById('workoutForm').reset();
@@ -1111,7 +1121,7 @@
                     
                 } catch (error) {
                     console.error('운동 추가 중 오류 발생:', error);
-                    alert('운동 등록에 실패했습니다: ' + error.message);
+                    alert('운동 등록에 실패했습니다: ' + (error?.message || error));
                 }
             }
 
@@ -1248,14 +1258,29 @@
             async deleteMember(memberId) {
                 if (confirm('정말로 이 멤버를 삭제하시겠습니까? 관련된 모든 운동 기록도 함께 삭제됩니다.')) {
                     try {
-                        // 해당 멤버의 운동 기록도 함께 삭제
-                        const memberWorkouts = this.workouts.filter(w => w.memberId === memberId);
-                        for (const workout of memberWorkouts) {
-                            await deleteDoc(doc(db, 'workouts', workout.id));
+                        if (this.useLocalStorage) {
+                            this.workouts = this.workouts.filter(w => w.memberId !== memberId);
+                            this.members = this.members.filter(m => m.id !== memberId);
+                            this.saveLocalData();
+                            alert('멤버와 관련 운동 기록이 성공적으로 삭제되었습니다. (로컬)');
+                            this.renderMembers();
+                            this.updateMemberSelect();
+                            this.renderCalendar();
+                            this.renderStats();
+                            return;
                         }
-                        
-                        // 멤버 삭제
-                        await deleteDoc(doc(db, 'members', memberId));
+
+                        const { error: delWorkoutsErr } = await supabase
+                            .from('workouts')
+                            .delete()
+                            .eq('member_id', memberId);
+                        if (delWorkoutsErr) throw delWorkoutsErr;
+
+                        const { error: delMemberErr } = await supabase
+                            .from('members')
+                            .delete()
+                            .eq('id', memberId);
+                        if (delMemberErr) throw delMemberErr;
                         alert('멤버와 관련 운동 기록이 성공적으로 삭제되었습니다.');
                     } catch (error) {
                         console.error('멤버 삭제 중 오류 발생:', error);
@@ -1479,34 +1504,38 @@
                     }
                 }
 
-                // Firebase 모드
+                // Supabase 모드
                 try {
-                    console.log('Firebase 모드로 테스트 운동 추가 중...');
+                    console.log('Supabase 모드로 테스트 운동 추가 중...');
                     
-                    // photoUrl 결정: URL 입력이 있으면 그대로 사용, 없으면 업로드
                     let photoUrl = photoUrlInput;
                     if (!photoUrl && photoFile) {
                         const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const objectPath = `workouts/${date}/${Date.now()}_${safeName}`;
-                        const storageRef = ref(storage, objectPath);
-                        
                         console.log('사진 업로드 중...', objectPath);
-                        await uploadBytes(storageRef, photoFile);
-                        
-                        console.log('사진 업로드 완료, URL 가져오는 중...');
-                        photoUrl = await getDownloadURL(storageRef);
+                        const { error: uploadErr } = await supabase
+                            .storage
+                            .from('workouts')
+                            .upload(objectPath, photoFile, { contentType: photoFile.type });
+                        if (uploadErr) throw uploadErr;
+
+                        const { data: publicUrlData } = supabase
+                            .storage
+                            .from('workouts')
+                            .getPublicUrl(objectPath);
+                        photoUrl = publicUrlData.publicUrl;
                     }
 
                     const workout = {
-                        memberId,
+                        member_id: memberId,
                         date, // YYYY-MM-DD
-                        photoUrl,
-                        createdAt: serverTimestamp()
+                        photo_url: photoUrl,
+                        created_at: new Date().toISOString()
                     };
 
-                    console.log('운동 데이터 생성 완료, Firestore에 저장 중...');
-                    const docRef = await addDoc(collection(db, 'workouts'), workout);
-                    console.log('운동 추가 성공! 문서 ID:', docRef.id);
+                    console.log('운동 데이터 생성 완료, DB에 저장 중...');
+                    const { error: insertErr } = await supabase.from('workouts').insert(workout);
+                    if (insertErr) throw insertErr;
 
                     // 폼 초기화
                     document.getElementById('workoutForm').reset();
@@ -1515,7 +1544,7 @@
                     
                 } catch (error) {
                     console.error('테스트 운동 추가 중 오류 발생:', error);
-                    alert('테스트 운동 등록에 실패했습니다: ' + error.message);
+                    alert('테스트 운동 등록에 실패했습니다: ' + (error?.message || error));
                 }
             }
         }
