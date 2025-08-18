@@ -1004,25 +1004,6 @@
                 const date = new Date().toISOString().slice(0,10); // 오늘 날짜 고정 YYYY-MM-DD
                 const photoFile = document.getElementById('workoutPhoto').files[0];
                 const photoUrlInput = '';
-                
-                // 운동 등록 시 비밀번호 요청
-                const pin = prompt('운동 등록을 위해 비밀번호를 입력해주세요:');
-                if (!pin || !/^\d{4}$/.test(pin)) {
-                    alert('비밀번호는 숫자 4자리여야 합니다.');
-                    return;
-                }
-                
-                // 선택된 멤버의 비밀번호 확인
-                const selectedMember = this.members.find(m => m.id === memberId);
-                if (!selectedMember) {
-                    alert('선택한 멤버를 찾을 수 없습니다.');
-                    return;
-                }
-                
-                if (selectedMember.pin !== pin) {
-                    alert('비밀번호가 올바르지 않습니다.');
-                    return;
-                }
 
                 console.log('운동 추가 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
 
@@ -1045,12 +1026,50 @@
                     return;
                 }
 
-                console.log('선택된 멤버:', selectedMember);
+                // 운동 등록 시 비밀번호 요청
+                const pin = prompt('운동 등록을 위해 비밀번호를 입력해주세요:');
+                if (!pin || !/^\d{4}$/.test(pin)) {
+                    alert('비밀번호는 숫자 4자리여야 합니다.');
+                    return;
+                }
+                
+                // Supabase에서 최신 멤버 정보로 비밀번호 확인
+                try {
+                    const { data: memberData, error: memberError } = await supabase
+                        .from('members')
+                        .select('id, nickname, pin')
+                        .eq('id', memberId)
+                        .single();
+                    
+                    if (memberError || !memberData) {
+                        alert('멤버 정보를 찾을 수 없습니다.');
+                        return;
+                    }
+                    
+                    if (memberData.pin !== pin) {
+                        alert('비밀번호가 올바르지 않습니다.');
+                        return;
+                    }
+                    
+                    console.log('비밀번호 검증 완료:', memberData.nickname);
+                    
+                } catch (error) {
+                    console.error('멤버 비밀번호 검증 중 오류:', error);
+                    alert('비밀번호 검증에 실패했습니다.');
+                    return;
+                }
 
                 if (this.useLocalStorage) {
                     // 로컬 스토리지 모드
                     try {
                         console.log('로컬 모드로 운동 추가 중...');
+                        
+                        // 로컬에서 멤버 비밀번호 확인
+                        const localMember = this.members.find(m => m.id === memberId);
+                        if (!localMember || localMember.pin !== pin) {
+                            alert('비밀번호가 올바르지 않습니다.');
+                            return;
+                        }
                         
                         // photoUrl 결정: URL 입력이 우선, 없으면 파일을 Base64로 변환
                         let photoUrl = photoUrlInput;
