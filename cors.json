@@ -1,0 +1,3 @@
+[
+  { "origin": ["https://woojugoing.github.io"], "method": ["GET","HEAD","PUT","POST","DELETE","OPTIONS"], "responseHeader": ["Content-Type","Authorization","x-goog-resumable"], "maxAgeSeconds": 3600 }
+]
