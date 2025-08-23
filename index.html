@@ -459,211 +459,6 @@
             font-weight: bold;
         }
 
-        /* 휴식 관리 스타일 */
-        .rest-form {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            display: none;
-        }
-
-        .rest-form.active {
-            display: block;
-        }
-
-        .rest-form .form-group {
-            margin-bottom: 20px;
-        }
-
-        .rest-form textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: inherit;
-            resize: vertical;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-            margin-top: 25px;
-        }
-
-        .rest-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .rest-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .rest-card:hover {
-            border-color: #ff6b6b;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
-        }
-
-        .rest-card.active {
-            border-color: #ff6b6b;
-            background: #fff5f5;
-        }
-
-        .rest-card.expired {
-            border-color: #6c757d;
-            background: #f8f9fa;
-            opacity: 0.7;
-        }
-
-        .rest-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .rest-member-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .rest-member-info h4 {
-            margin: 0;
-            color: #333;
-            font-size: 1.1rem;
-        }
-
-        .rest-status {
-            margin-left: auto;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .rest-status.active {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .rest-status.expired {
-            background: #6c757d;
-            color: white;
-        }
-
-        .rest-dates {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }
-
-        .rest-date {
-            text-align: center;
-        }
-
-        .rest-date-label {
-            color: #666;
-            font-size: 0.8rem;
-            margin-bottom: 5px;
-        }
-
-        .rest-date-value {
-            color: #333;
-            font-weight: 600;
-        }
-
-        .rest-reason {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-left: 4px solid #ff6b6b;
-        }
-
-        .rest-reason h5 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 0.9rem;
-        }
-
-        .rest-reason p {
-            margin: 0;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .rest-document {
-            margin-top: 15px;
-        }
-
-        .rest-document img {
-            max-width: 100%;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .rest-document img:hover {
-            border-color: #ff6b6b;
-            transform: scale(1.02);
-        }
-
-        .rest-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .rest-actions .secondary-btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        /* 휴식 중인 멤버 표시 스타일 */
-        .member-card.resting {
-            border-color: #ff6b6b;
-            background: #fff5f5;
-        }
-
-        .member-card.resting::after {
-            content: "휴식 중";
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff6b6b;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .calendar-day.has-rest {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-            color: white;
-            border-color: #e74c3c;
-        }
-
-        .calendar-day.has-rest:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-        }
-
         .weekly-calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -835,7 +630,6 @@
         <nav class="main-nav">
             <button class="nav-btn active" data-tab="members">멤버 관리</button>
             <button class="nav-btn" data-tab="add-workout">운동 추가</button>
-            <button class="nav-btn" data-tab="rest">휴식 관리</button>
             <button class="nav-btn" data-tab="stats">현황</button>
         </nav>
 
@@ -889,58 +683,6 @@
         </div>
 
 
-
-        <!-- 휴식 관리 탭 -->
-        <div id="rest" class="tab-content">
-            <div class="section-header">
-                <h2>휴식 관리</h2>
-                <button id="addRestBtn" class="primary-btn">새 휴식 추가</button>
-            </div>
-            
-            <div class="rest-form" id="restForm" style="display: none;">
-                <div class="form-group">
-                    <label for="restMemberSelect">멤버 선택:</label>
-                    <select id="restMemberSelect" required>
-                        <option value="">멤버를 선택하세요</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="restReason">휴식 사유:</label>
-                    <textarea id="restReason" placeholder="휴식 사유를 입력하세요 (예: 부상, 개인사정, 의료상황 등)" rows="3" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="restStartDate">휴식 시작일:</label>
-                    <input type="date" id="restStartDate" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="restEndDate">휴식 종료일:</label>
-                    <input type="date" id="restEndDate" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="restDocument">첨부 서류 (처방전, 진단서 등):</label>
-                    <input type="file" id="restDocument" accept="image/*,.pdf">
-                    <div id="restDocumentPreview" class="photo-preview"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="restPin">비밀번호 확인:</label>
-                    <input type="password" id="restPin" placeholder="비밀번호(숫자 4자리)" pattern="\\d{4}" maxlength="4" inputmode="numeric" required>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" id="saveRestBtn" class="primary-btn">휴식 등록</button>
-                    <button type="button" id="cancelRestBtn" class="secondary-btn">취소</button>
-                </div>
-            </div>
-            
-            <div class="rest-list" id="restList">
-                <div class="loading">휴식 목록을 불러오는 중...</div>
-            </div>
-        </div>
 
         <!-- 현황 탭 -->
         <div id="stats" class="tab-content">
@@ -1021,7 +763,6 @@
             constructor() {
                 this.members = [];
                 this.workouts = [];
-                this.rests = []; // 휴식 데이터 추가
                 this.currentDate = new Date();
                 this.memberColors = [
                     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
@@ -1081,7 +822,6 @@
                 try {
                     await this.loadMembersFromSupabase();
                     await this.loadWorkoutsFromSupabase();
-                    await this.loadRestsFromSupabase();
 
                     this.membersChannel = supabase
                         .channel('public:members')
@@ -1094,13 +834,6 @@
                         .channel('public:workouts')
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'workouts' }, async () => {
                             await this.loadWorkoutsFromSupabase();
-                        })
-                        .subscribe();
-
-                    this.restsChannel = supabase
-                        .channel('public:rests')
-                        .on('postgres_changes', { event: '*', schema: 'public', table: 'rests' }, async () => {
-                            await this.loadRestsFromSupabase();
                         })
                         .subscribe();
 
@@ -1150,28 +883,6 @@
                 }));
                 this.renderStats();
                 this.renderWeeklyCalendar();
-            }
-
-            async loadRestsFromSupabase() {
-                const { data, error } = await supabase
-                    .from('rests')
-                    .select('id, member_id, reason, start_date, end_date, document_url, created_at')
-                    .order('created_at', { ascending: false });
-                if (error) {
-                    console.error('휴식 로드 오류:', error);
-                    return;
-                }
-                this.rests = (data || []).map(row => ({
-                    id: row.id,
-                    memberId: row.member_id,
-                    reason: row.reason,
-                    startDate: row.start_date,
-                    endDate: row.end_date,
-                    documentUrl: row.document_url,
-                    createdAt: row.created_at
-                }));
-                this.renderRests();
-                this.renderMembers(); // 멤버 카드에 휴식 상태 표시
             }
 
             // 로컬 스토리지 관련 제거
@@ -1224,31 +935,6 @@
 
 
 
-                // 휴식 관리
-                document.getElementById('addRestBtn').addEventListener('click', () => {
-                    document.getElementById('restForm').style.display = 'block';
-                    this.updateRestMemberSelect();
-                    // 오늘 날짜를 기본값으로 설정
-                    const today = new Date().toISOString().slice(0, 10);
-                    document.getElementById('restStartDate').value = today;
-                    document.getElementById('restEndDate').value = today;
-                });
-
-                document.getElementById('saveRestBtn').addEventListener('click', () => {
-                    this.addRest();
-                });
-
-                document.getElementById('cancelRestBtn').addEventListener('click', () => {
-                    document.getElementById('restForm').style.display = 'none';
-                    document.getElementById('restForm').reset();
-                    document.getElementById('restDocumentPreview').innerHTML = '';
-                });
-
-                // 휴식 서류 미리보기
-                document.getElementById('restDocument').addEventListener('change', (e) => {
-                    this.previewRestDocument(e.target.files[0]);
-                });
-
                 // 주별 네비게이션
                 document.getElementById('prevWeek').addEventListener('click', () => {
                     this.currentDate.setDate(this.currentDate.getDate() - 7);
@@ -1277,12 +963,9 @@
                 document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
                 document.getElementById(tabName).classList.add('active');
                 document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-                
                 if (tabName === 'stats') {
                     this.renderStats();
                     this.renderWeeklyCalendar();
-                } else if (tabName === 'rest') {
-                    this.renderRests();
                 }
             }
 
@@ -1592,128 +1275,6 @@
                 });
             }
 
-            async addRest() {
-                const memberId = document.getElementById('restMemberSelect').value;
-                const reason = document.getElementById('restReason').value.trim();
-                const startDate = document.getElementById('restStartDate').value;
-                const endDate = document.getElementById('restEndDate').value;
-                const documentFile = document.getElementById('restDocument').files[0];
-                const pin = document.getElementById('restPin').value;
-
-                // 유효성 검사
-                if (!memberId) {
-                    alert('멤버를 선택해주세요.');
-                    return;
-                }
-                if (!reason) {
-                    alert('휴식 사유를 입력해주세요.');
-                    return;
-                }
-                if (!startDate || !endDate) {
-                    alert('휴식 시작일과 종료일을 선택해주세요.');
-                    return;
-                }
-                if (new Date(startDate) > new Date(endDate)) {
-                    alert('휴식 시작일은 종료일보다 이전이어야 합니다.');
-                    return;
-                }
-                if (!pin || !/^\d{4}$/.test(pin)) {
-                    alert('비밀번호는 숫자 4자리여야 합니다.');
-                    return;
-                }
-
-                // 비밀번호 확인
-                try {
-                    const { data: memberData, error: memberError } = await supabase
-                        .from('members')
-                        .select('id, nickname, pin')
-                        .eq('id', memberId)
-                        .single();
-                    
-                    if (memberError || !memberData) {
-                        alert('멤버 정보를 찾을 수 없습니다.');
-                        return;
-                    }
-                    
-                    if (memberData.pin !== pin) {
-                        alert('비밀번호가 올바르지 않습니다.');
-                        return;
-                    }
-                    
-                    console.log('비밀번호 검증 완료:', memberData.nickname);
-                    
-                } catch (error) {
-                    console.error('멤버 비밀번호 검증 중 오류:', error);
-                    alert('비밀번호 검증에 실패했습니다.');
-                    return;
-                }
-
-                try {
-                    let documentUrl = '';
-                    if (documentFile) {
-                        // 이미지 압축
-                        const compressedImage = await this.compressImage(documentFile);
-                        
-                        // 압축된 이미지를 Blob으로 변환
-                        const response = await fetch(compressedImage);
-                        const compressedBlob = await response.blob();
-                        
-                        const safeName = documentFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-                        const objectPath = `rests/${Date.now()}_${safeName}`;
-                        console.log('휴식 서류 업로드 중...', objectPath);
-                        
-                        const { error: uploadErr } = await supabase
-                            .storage
-                            .from('workouts')
-                            .upload(objectPath, compressedBlob, { contentType: 'image/jpeg' });
-                        if (uploadErr) throw uploadErr;
-
-                        const { data: publicUrlData } = supabase
-                            .storage
-                            .from('workouts')
-                            .getPublicUrl(objectPath);
-                        documentUrl = publicUrlData.publicUrl;
-                    }
-
-                    const rest = {
-                        member_id: memberId,
-                        reason,
-                        start_date: startDate,
-                        end_date: endDate,
-                        document_url: documentUrl,
-                        created_at: new Date().toISOString()
-                    };
-
-                    console.log('휴식 데이터 생성 완료, DB에 저장 중...');
-                    const { error: insertErr } = await supabase.from('rests').insert(rest);
-                    if (insertErr) throw insertErr;
-
-                    // 폼 초기화
-                    document.getElementById('restForm').style.display = 'none';
-                    document.getElementById('restForm').reset();
-                    document.getElementById('restDocumentPreview').innerHTML = '';
-                    alert('휴식이 성공적으로 등록되었습니다!');
-                    location.reload();
-                    
-                } catch (error) {
-                    console.error('휴식 추가 중 오류 발생:', error);
-                    alert('휴식 등록에 실패했습니다: ' + (error?.message || error));
-                }
-            }
-
-            previewRestDocument(file) {
-                const preview = document.getElementById('restDocumentPreview');
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="휴식 서류 미리보기">`;
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    preview.innerHTML = '';
-                }
-            }
-
             previewPhoto(file) {
                 const preview = document.getElementById('photoPreview');
                 if (file) {
@@ -1736,10 +1297,8 @@
 
                 membersList.innerHTML = '';
                 this.members.forEach(member => {
-                    // 현재 휴식 상태 확인
-                    const isResting = this.isMemberResting(member.id);
                     const memberCard = document.createElement('div');
-                    memberCard.className = `member-card ${isResting ? 'resting' : ''}`;
+                    memberCard.className = 'member-card';
                     memberCard.innerHTML = `
                         <div class="member-color" style="background-color: ${member.color}"></div>
                         <h3>${member.nickname}</h3>
@@ -1761,99 +1320,9 @@
                 });
             }
 
-            renderRests() {
-                const restList = document.getElementById('restList');
-                if (this.rests.length === 0) {
-                    restList.innerHTML = '<div class="loading">등록된 휴식이 없습니다.</div>';
-                    return;
-                }
-
-                restList.innerHTML = '';
-                this.rests.forEach(rest => {
-                    const member = this.members.find(m => m.id === rest.memberId);
-                    if (!member) return;
-
-                    const today = new Date();
-                    const startDate = new Date(rest.startDate);
-                    const endDate = new Date(rest.endDate);
-                    const isActive = today >= startDate && today <= endDate;
-                    const isExpired = today > endDate;
-
-                    const restCard = document.createElement('div');
-                    restCard.className = `rest-card ${isActive ? 'active' : ''} ${isExpired ? 'expired' : ''}`;
-                    
-                    const statusText = isActive ? '휴식 중' : (isExpired ? '휴식 완료' : '휴식 예정');
-                    const statusClass = isActive ? 'active' : (isExpired ? 'expired' : 'active');
-
-                    restCard.innerHTML = `
-                        <div class="rest-header">
-                            <div class="rest-member-color" style="background-color: ${member.color}"></div>
-                            <div class="rest-member-info">
-                                <h4>${member.nickname}</h4>
-                            </div>
-                            <span class="rest-status ${statusClass}">${statusText}</span>
-                        </div>
-                        
-                        <div class="rest-dates">
-                            <div class="rest-date">
-                                <div class="rest-date-label">시작일</div>
-                                <div class="rest-date-value">${this.formatDate(rest.startDate)}</div>
-                            </div>
-                            <div class="rest-date">
-                                <div class="rest-date-label">종료일</div>
-                                <div class="rest-date-value">${this.formatDate(rest.endDate)}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="rest-reason">
-                            <h5>휴식 사유</h5>
-                            <p>${rest.reason}</p>
-                        </div>
-                        
-                        ${rest.documentUrl ? `
-                            <div class="rest-document">
-                                <img src="${rest.documentUrl}" alt="휴식 서류" onclick="this.style.transform='scale(1.5)';setTimeout(()=>this.style.transform='scale(1)',1000);">
-                            </div>
-                        ` : ''}
-                        
-                        <div class="rest-actions">
-                            <button class="secondary-btn" onclick="this.parentElement.parentElement.style.display='none'">숨기기</button>
-                        </div>
-                    `;
-                    
-                    restList.appendChild(restCard);
-                });
-            }
-
-            isMemberResting(memberId) {
-                const today = new Date();
-                return this.rests.some(rest => {
-                    if (rest.memberId !== memberId) return false;
-                    const startDate = new Date(rest.startDate);
-                    const endDate = new Date(rest.endDate);
-                    return today >= startDate && today <= endDate;
-                });
-            }
-
-            formatDate(dateString) {
-                const date = new Date(dateString);
-                return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-            }
-
             updateMemberSelect() {
                 const memberSelect = document.getElementById('memberSelect');
                 memberSelect.innerHTML = '<option value="">멤버를 선택하세요</option>';
-                this.members.forEach(member => {
-                    const option = document.createElement('option');
-                    option.value = member.id;
-                    option.textContent = member.nickname;
-                    memberSelect.appendChild(option);
-                });
-            }
-
-            updateRestMemberSelect() {
-                const restMemberSelect = document.getElementById('restMemberSelect');
-                restMemberSelect.innerHTML = '<option value="">멤버를 선택하세요</option>';
                 this.members.forEach(member => {
                     const option = document.createElement('option');
                     option.value = member.id;
@@ -2046,13 +1515,6 @@
                     dayElement.textContent = `${day.getDate()}`;
 
                     const dayWorkouts = this.workouts.filter(w => w.date === key);
-                    const dayRests = this.rests.filter(r => {
-                        const restStart = new Date(r.startDate);
-                        const restEnd = new Date(r.endDate);
-                        const dayDate = new Date(key);
-                        return dayDate >= restStart && dayDate <= restEnd;
-                    });
-
                     if (dayWorkouts.length > 0) {
                         dayElement.classList.add('has-workout');
                         dayElement.style.cursor = 'pointer';
@@ -2071,25 +1533,6 @@
                         });
 
                         dayElement.addEventListener('click', () => this.showWorkoutDetails(day));
-                    }
-
-                    // 휴식 정보 표시
-                    if (dayRests.length > 0) {
-                        dayElement.classList.add('has-rest');
-                        dayElement.style.cursor = 'pointer';
-                        
-                        // 휴식 중인 멤버 수 표시
-                        const restCount = document.createElement('div');
-                        restCount.style.position = 'absolute';
-                        restCount.style.top = '5px';
-                        restCount.style.left = '5px';
-                        restCount.style.background = '#ff6b6b';
-                        restCount.style.color = 'white';
-                        restCount.style.fontSize = '0.7rem';
-                        restCount.style.padding = '2px 4px';
-                        restCount.style.borderRadius = '8px';
-                        restCount.textContent = `${dayRests.length}`;
-                        dayElement.appendChild(restCount);
                     }
 
                     weeklyCalendar.appendChild(dayElement);
