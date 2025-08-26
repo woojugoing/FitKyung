@@ -311,6 +311,20 @@
             position: relative;
         }
 
+        .day-count-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            line-height: 1;
+            font-weight: 700;
+            pointer-events: none;
+        }
+
         .calendar-day:hover {
             background: #e9ecef;
         }
@@ -1324,14 +1338,7 @@
                 try {
                     console.log('Supabase 모드로 운동 추가 중...');
                     
-                    // 하루 한 번 제한 확인
-                    const existingWorkout = this.workouts.find(w => 
-                        w.memberId === memberId && w.date === date
-                    );
-                    if (existingWorkout) {
-                        alert('오늘 이미 운동을 등록했습니다. 하루에 한 번만 등록할 수 있습니다.');
-                        return;
-                    }
+                    // 중복 허용: 같은 member_id + date 조합이 있어도 추가 허용
                     
                     let photoUrl = photoUrlInput;
                     if (!photoUrl && photoFile) {
@@ -1672,6 +1679,13 @@
                     dayElement.textContent = `${day.getDate()}`;
 
                     const dayWorkouts = this.workouts.filter(w => w.date === key);
+                    // 날짜별 총 운동 횟수 배지 표시
+                    if (dayWorkouts.length > 0) {
+                        const countBadge = document.createElement('div');
+                        countBadge.className = 'day-count-badge';
+                        countBadge.textContent = String(dayWorkouts.length);
+                        dayElement.appendChild(countBadge);
+                    }
                     if (dayWorkouts.length > 0) {
                         dayElement.classList.add('has-workout');
                         dayElement.style.cursor = 'pointer';
