@@ -769,7 +769,7 @@
             
             <div class="member-form" id="memberForm" style="display: none;">
                 <input type="text" id="nickname" placeholder="닉네임을 입력하세요" required>
-                <input type="password" id="memberPin" placeholder="비밀번호(숫자 4자리)" pattern="\\d{4}" maxlength="4" inputmode="numeric" required>
+                <input type="password" id="memberPin" placeholder="비밀번호(숫자 4자리)" pattern="\\d{4}" maxlength="4" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
                 <button type="button" id="saveMemberBtn" class="primary-btn">등록</button>
                 <button type="button" id="cancelMemberBtn" class="secondary-btn">취소</button>
             </div>
@@ -1468,7 +1468,7 @@
                         <div class="member-color" style="background-color: ${member.color}"></div>
                         <h3>${member.nickname}</h3>
                         <button class="secondary-btn delete-member-btn" data-member-id="${member.id}">삭제</button>
-                        <input type="password" class="member-pin-input" placeholder="비밀번호(4자리)" maxlength="4" inputmode="numeric" pattern="\\d{4}" style="margin-top:8px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;" />
+                        <input type="password" class="member-pin-input" placeholder="비밀번호(4자리)" maxlength="4" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" pattern="\\d{4}" style="margin-top:8px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;" />
                     `;
                     membersList.appendChild(memberCard);
                 });
