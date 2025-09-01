@@ -382,6 +382,15 @@
         .modal-navigation button {
             margin: 0 10px;
         }
+        
+        .modal-actions {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .modal-actions button {
+            margin: 0 10px;
+        }
 
         .close {
             color: #aaa;
@@ -793,19 +802,19 @@
                     </select>
                 </div>
                 
-
+                <div class="form-group">
+                    <label for="workoutDate">운동 날짜:</label>
+                    <input type="date" id="workoutDate" required>
+                </div>
                 
                 <div class="form-group">
-                    <label for="workoutPhoto">운동 사진 (파일 업로드):</label>
-                    <input type="file" id="workoutPhoto" accept="image/*">
-                    <div id="photoPreview" class="photo-preview"></div>
+                    <label for="workoutPhotos">운동 사진들 (여러 개 선택 가능):</label>
+                    <input type="file" id="workoutPhotos" accept="image/*" multiple>
+                    <div class="photo-upload-info">여러 사진을 선택하려면 Ctrl(Windows) 또는 Cmd(Mac) 키를 누른 상태에서 클릭하세요</div>
+                    <div id="photosPreview" class="photos-preview"></div>
                 </div>
-
-                
                 
                 <button type="submit" class="primary-btn">운동 등록</button>
-                
-
             </form>
         </div>
 
@@ -839,7 +848,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="totalWorkouts">0</div>
-                            <div class="stat-label">총 운동</div>
+                            <div class="stat-label">해당 주 운동</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="thisWeekWorkouts">0</div>
@@ -890,6 +899,9 @@
             </div>
             <img id="modalImage" src="" alt="운동 사진">
             <p id="modalInfo"></p>
+            <div class="modal-actions">
+                <button id="deleteWorkoutBtn" class="danger-btn">운동 삭제</button>
+            </div>
         </div>
     </div>
 
@@ -1011,7 +1023,7 @@
             async loadWorkoutsFromSupabase() {
                 const { data, error } = await supabase
                     .from('workouts')
-                    .select('id, member_id, date, photo_url, created_at')
+                    .select('id, member_id, date, photo_url, photo_urls, created_at')
                     .order('created_at', { ascending: true });
                 if (error) {
                     console.error('운동 로드 오류:', error);
@@ -1021,7 +1033,8 @@
                     id: row.id,
                     memberId: row.member_id,
                     date: row.date,
-                    photoUrl: row.photo_url,
+                    photoUrl: row.photo_url, // 기존 단일 사진 (호환성)
+                    photoUrls: row.photo_urls, // 새로운 여러 사진 배열
                     createdAt: row.created_at
                 }));
                 this.renderStats();
@@ -1071,9 +1084,9 @@
 
 
 
-                // 사진 미리보기
-                document.getElementById('workoutPhoto').addEventListener('change', (e) => {
-                    this.previewPhoto(e.target.files[0]);
+                // 사진 미리보기 (여러 사진)
+                document.getElementById('workoutPhotos').addEventListener('change', (e) => {
+                    this.previewPhotos(e.target.files);
                 });
 
 
@@ -1081,17 +1094,20 @@
                 // 주별 네비게이션
                 document.getElementById('prevWeek').addEventListener('click', () => {
                     this.currentDate.setDate(this.currentDate.getDate() - 7);
+                    this.renderStats();
                     this.renderWeeklyCalendar();
                 });
 
                 document.getElementById('nextWeek').addEventListener('click', () => {
                     this.currentDate.setDate(this.currentDate.getDate() + 7);
+                    this.renderStats();
                     this.renderWeeklyCalendar();
                 });
 
                 // 현재 주로 돌아가기 버튼 추가
                 document.getElementById('currentWeek').addEventListener('click', () => {
                     this.currentDate = new Date();
+                    this.renderStats();
                     this.renderWeeklyCalendar();
                 });
 
@@ -1100,6 +1116,7 @@
                     const dateInput = document.getElementById('dateInput');
                     if (dateInput.value) {
                         this.currentDate = new Date(dateInput.value);
+                        this.renderStats();
                         this.renderWeeklyCalendar();
                     } else {
                         alert('날짜를 선택해주세요.');
@@ -1135,9 +1152,16 @@
                 document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
                 document.getElementById(tabName).classList.add('active');
                 document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
                 if (tabName === 'stats') {
                     this.renderStats();
                     this.renderWeeklyCalendar();
+                } else if (tabName === 'add-workout') {
+                    // 운동 추가 탭이 활성화될 때 오늘 날짜를 기본값으로 설정
+                    const workoutDateInput = document.getElementById('workoutDate');
+                    if (workoutDateInput) {
+                        workoutDateInput.value = new Date().toISOString().slice(0, 10);
+                    }
                 }
             }
 
@@ -1172,6 +1196,7 @@
                     const member = {
                         id: Date.now().toString(),
                         nickname,
+                        pin, // 비밀번호 추가
                         color: this.memberColors[this.members.length % this.memberColors.length],
                         createdAt: new Date().toISOString()
                     };
@@ -1181,6 +1206,7 @@
                     
                     document.getElementById('memberForm').style.display = 'none';
                     document.getElementById('nickname').value = '';
+                    document.getElementById('memberPin').value = '';
                     alert('멤버가 성공적으로 등록되었습니다! (로컬 모드)');
                     
                     this.renderMembers();
@@ -1230,11 +1256,11 @@
                 console.log('addWorkout 함수 호출됨');
                 
                 const memberId = document.getElementById('memberSelect').value;
-                const date = new Date().toISOString().slice(0,10); // 오늘 날짜 고정 YYYY-MM-DD
-                const photoFile = document.getElementById('workoutPhoto').files[0];
+                const date = document.getElementById('workoutDate').value; // 사용자가 선택한 날짜
+                const photoFiles = document.getElementById('workoutPhotos').files;
                 const photoUrlInput = '';
 
-                console.log('운동 추가 시작:', { memberId, date, photoFile: photoFile?.name, photoUrlInput });
+                console.log('운동 추가 시작:', { memberId, date, photoFilesCount: photoFiles?.length, photoUrlInput });
 
                 // 상세한 유효성 검사
                 if (!memberId) {
@@ -1249,18 +1275,19 @@
                     return;
                 }
                 
-                if (!photoFile && !photoUrlInput) {
-                    alert('운동 사진 파일을 선택하거나 사진 URL을 입력해주세요.');
+                if (!photoFiles || photoFiles.length === 0) {
+                    alert('운동 사진을 하나 이상 선택해주세요.');
                     console.log('사진 소스 누락');
                     return;
                 }
 
                 // 운동 등록 시 비밀번호 요청
                 const pin = prompt('운동 등록을 위해 비밀번호를 입력해주세요:');
-                if (!pin || !/^\d{4}$/.test(pin)) {
+                if (!pin || !/^\d{4}$/.test(pin.trim())) {
                     alert('비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
+                const trimmedPin = pin.trim();
                 
                 // Supabase에서 최신 멤버 정보로 비밀번호 확인
                 try {
@@ -1275,7 +1302,7 @@
                         return;
                     }
                     
-                    if (memberData.pin !== pin) {
+                    if (memberData.pin !== trimmedPin) {
                         alert('비밀번호가 올바르지 않습니다.');
                         return;
                     }
@@ -1295,22 +1322,23 @@
                         
                         // 로컬에서 멤버 비밀번호 확인
                         const localMember = this.members.find(m => m.id === memberId);
-                        if (!localMember || localMember.pin !== pin) {
+                        if (!localMember || localMember.pin !== trimmedPin) {
                             alert('비밀번호가 올바르지 않습니다.');
                             return;
                         }
                         
-                        // photoUrl 결정: URL 입력이 우선, 없으면 파일을 Base64로 변환
-                        let photoUrl = photoUrlInput;
-                        if (!photoUrl && photoFile) {
-                            photoUrl = await this.fileToBase64(photoFile);
+                        // 여러 사진을 Base64로 변환
+                        const photoUrls = [];
+                        for (let i = 0; i < photoFiles.length; i++) {
+                            const photoUrl = await this.fileToBase64(photoFiles[i]);
+                            photoUrls.push(photoUrl);
                         }
                         
                         const workout = {
                             id: Date.now().toString(),
                             memberId,
                             date,
-                            photoUrl,
+                            photoUrls, // 여러 사진 URL 배열
                             createdAt: new Date().toISOString()
                         };
 
@@ -1320,8 +1348,8 @@
                         
                         // 폼 초기화
                         document.getElementById('workoutForm').reset();
-                        document.getElementById('photoPreview').innerHTML = '';
-                        alert('운동이 성공적으로 등록되었습니다! (로컬 모드)');
+                        document.getElementById('photosPreview').innerHTML = '';
+                        alert(`운동이 성공적으로 등록되었습니다! (로컬 모드, ${photoFiles.length}개의 사진)`);
                         
                         this.renderStats();
                         this.renderWeeklyCalendar();
@@ -1338,10 +1366,14 @@
                 try {
                     console.log('Supabase 모드로 운동 추가 중...');
                     
+
                     // 중복 허용: 같은 member_id + date 조합이 있어도 추가 허용
                     
-                    let photoUrl = photoUrlInput;
-                    if (!photoUrl && photoFile) {
+                    // 여러 사진 업로드
+                    const photoUrls = [];
+                    for (let i = 0; i < photoFiles.length; i++) {
+                        const photoFile = photoFiles[i];
+                        
                         // 이미지 압축
                         const compressedImage = await this.compressImage(photoFile);
                         
@@ -1350,7 +1382,7 @@
                         const compressedBlob = await response.blob();
                         
                         const safeName = photoFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-                        const objectPath = `${date}/${Date.now()}_${safeName}`;
+                        const objectPath = `${date}/${Date.now()}_${i}_${safeName}`;
                         console.log('압축된 사진 업로드 중...', objectPath);
                         
                         const { error: uploadErr } = await supabase
@@ -1363,13 +1395,13 @@
                             .storage
                             .from('workouts')
                             .getPublicUrl(objectPath);
-                        photoUrl = publicUrlData.publicUrl;
+                        photoUrls.push(publicUrlData.publicUrl);
                     }
 
                     const workout = {
                         member_id: memberId,
                         date, // YYYY-MM-DD
-                        photo_url: photoUrl,
+                        photo_urls: photoUrls, // 여러 사진 URL 배열
                         created_at: new Date().toISOString()
                     };
 
@@ -1379,8 +1411,8 @@
 
                     // 폼 초기화
                     document.getElementById('workoutForm').reset();
-                    document.getElementById('photoPreview').innerHTML = '';
-                    alert('운동이 성공적으로 등록되었습니다!');
+                    document.getElementById('photosPreview').innerHTML = '';
+                    alert(`운동이 성공적으로 등록되었습니다! (${photoUrls.length}개의 사진)`);
                     location.reload();
                     
                 } catch (error) {
@@ -1440,16 +1472,22 @@
                 });
             }
 
-            previewPhoto(file) {
-                const preview = document.getElementById('photoPreview');
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="미리보기">`;
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    preview.innerHTML = '';
+            previewPhotos(files) {
+                const preview = document.getElementById('photosPreview');
+                preview.innerHTML = '';
+                
+                if (files && files.length > 0) {
+                    Array.from(files).forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.alt = `사진 ${index + 1}`;
+                            img.title = `사진 ${index + 1}: ${file.name}`;
+                            preview.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    });
                 }
             }
 
@@ -1581,25 +1619,27 @@
                 const thisMonthWorkouts = document.getElementById('thisMonthWorkouts');
 
                 totalMembers.textContent = this.members.length;
-                totalWorkouts.textContent = this.workouts.length;
-
-                // 이번 주 운동 수 계산
-                const now = new Date();
-                const weekStart = new Date(now);
-                weekStart.setDate(now.getDate() - now.getDay());
+                
+                // 현재 주의 시작일 (월요일)과 끝일 (일요일) 계산
+                const weekStart = new Date(this.currentDate);
+                weekStart.setDate(this.currentDate.getDate() - this.currentDate.getDay() + (this.currentDate.getDay() === 0 ? -6 : 1));
                 weekStart.setHours(0, 0, 0, 0);
                 
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekStart.getDate() + 6);
                 weekEnd.setHours(23, 59, 59, 999);
 
+                // 해당 주의 총 운동 수 계산
                 const workoutsThisWeek = this.workouts.filter(w => {
                     const workoutDate = new Date(w.date);
                     return workoutDate >= weekStart && workoutDate <= weekEnd;
                 });
+                
+                totalWorkouts.textContent = workoutsThisWeek.length;
                 thisWeekWorkouts.textContent = workoutsThisWeek.length;
 
                 // 이번 달 운동 수 계산
+                const now = new Date();
                 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
                 monthEnd.setHours(23, 59, 59, 999);
@@ -1621,9 +1661,24 @@
 
                 memberStatsList.innerHTML = '';
                 
-                // 멤버별 운동 횟수 계산
+                // 현재 주의 시작일 (월요일)과 끝일 (일요일) 계산
+                const weekStart = new Date(this.currentDate);
+                weekStart.setDate(this.currentDate.getDate() - this.currentDate.getDay() + (this.currentDate.getDay() === 0 ? -6 : 1));
+                weekStart.setHours(0, 0, 0, 0);
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+                
+                // 멤버별 해당 주 운동 횟수 계산
                 const memberStats = this.members.map(member => {
-                    const workoutCount = this.workouts.filter(w => w.memberId === member.id).length;
+                    const workoutCount = this.workouts.filter(w => {
+                        if (w.memberId !== member.id) return false;
+                        
+                        const workoutDate = new Date(w.date);
+                        return workoutDate >= weekStart && workoutDate <= weekEnd;
+                    }).length;
+                    
                     return {
                         ...member,
                         workoutCount
@@ -1748,71 +1803,99 @@
                 const modalImage = document.getElementById('modalImage');
                 const modalInfo = document.getElementById('modalInfo');
                 
-                if (dayWorkouts.length === 1) {
-                    // 운동이 하나인 경우
+                // 모든 운동의 사진을 하나의 배열로 합치기
+                let allPhotos = [];
+                let allWorkouts = [];
+                
+                dayWorkouts.forEach(workout => {
+                    if (workout.photoUrls && workout.photoUrls.length > 0) {
+                        // photoUrls 배열이 있는 경우
+                        workout.photoUrls.forEach(photoUrl => {
+                            allPhotos.push(photoUrl);
+                            allWorkouts.push(workout);
+                        });
+                    } else if (workout.photoUrl) {
+                        // photoUrl 단일 필드가 있는 경우 (기존 데이터)
+                        allPhotos.push(workout.photoUrl);
+                        allWorkouts.push(workout);
+                    }
+                });
+                
+                if (allPhotos.length === 0) {
+                    // 사진이 없는 경우
                     const workout = dayWorkouts[0];
                     const member = this.members.find(m => m.id === workout.memberId);
                     modalTitle.textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
-                    if (workout.photoUrl) {
-                        modalImage.src = workout.photoUrl;
+                    modalImage.style.display = 'none';
+                    modalInfo.innerHTML = `
+                        ${key}에 등록된 운동입니다.<br>
+                        <em style="color: #666;">사진이 없는 운동입니다.</em>
+                    `;
+                    
+                    // 운동 삭제 버튼 이벤트 설정
+                    const deleteWorkoutBtn = document.getElementById('deleteWorkoutBtn');
+                    deleteWorkoutBtn.onclick = () => {
+                        this.deleteWorkout(workout.id);
+                    };
+                    return;
+                }
+                
+                if (allPhotos.length === 1) {
+                    // 사진이 하나인 경우
+                    const workout = allWorkouts[0];
+                    const member = this.members.find(m => m.id === workout.memberId);
+                    modalTitle.textContent = `${member ? member.nickname : '알 수 없음'}의 운동`;
+                    modalImage.src = allPhotos[0];
+                    modalImage.style.display = 'block';
+                    modalInfo.innerHTML = `
+                        ${key}에 등록된 운동입니다.<br>
+                        <button id="deletePhotoBtn" class="secondary-btn" style="margin-top: 15px;">사진 삭제</button>
+                    `;
+                    
+                                            // 사진 삭제 버튼 이벤트 설정
+                        const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+                        deletePhotoBtn.onclick = () => {
+                            this.deleteWorkoutPhoto(workout.id, allPhotos[0]);
+                        };
+                        
+                        // 운동 삭제 버튼 이벤트 설정
+                        const deleteWorkoutBtn = document.getElementById('deleteWorkoutBtn');
+                        deleteWorkoutBtn.onclick = () => {
+                            this.deleteWorkout(workout.id);
+                        };
+                } else {
+                    // 사진이 여러 개인 경우
+                    modalTitle.textContent = `${key} 운동 기록 (${allPhotos.length}장)`;
+                    
+                    // 여러 사진을 순차적으로 보여주는 기능
+                    let currentIndex = 0;
+                    const showPhoto = (index) => {
+                        const currentWorkout = allWorkouts[index];
+                        const currentMember = this.members.find(m => m.id === currentWorkout.memberId);
+                        
+                        modalImage.src = allPhotos[index];
+                        modalImage.style.display = 'block';
                         modalInfo.innerHTML = `
+                            <strong>${currentMember ? currentMember.nickname : '알 수 없음'}</strong>의 운동<br>
                             ${key}에 등록된 운동입니다.<br>
+                            ${index + 1} / ${allPhotos.length}<br>
                             <button id="deletePhotoBtn" class="secondary-btn" style="margin-top: 15px;">사진 삭제</button>
                         `;
                         
                         // 사진 삭제 버튼 이벤트 설정
-                        setTimeout(() => {
-                            document.getElementById('deletePhotoBtn').addEventListener('click', () => {
-                                this.deleteWorkoutPhoto(workout.id, workout.photoUrl);
-                            });
-                        }, 100);
-                    } else {
-                        modalImage.style.display = 'none';
-                        modalInfo.innerHTML = `
-                            ${key}에 등록된 운동입니다.<br>
-                            <em style="color: #666;">사진이 삭제된 운동입니다.</em>
-                        `;
-                    }
-                    
-                    // 단일 운동일 때는 이전/다음 버튼 숨김
-                    document.getElementById('prevWorkoutBtn').style.display = 'none';
-                    document.getElementById('nextWorkoutBtn').style.display = 'none';
-                } else {
-                    // 운동이 여러 개인 경우
-                    modalTitle.textContent = `${key} 운동 기록 (${dayWorkouts.length}개)`;
-                    
-                    // 여러 운동 사진을 순차적으로 보여주는 기능
-                    let currentIndex = 0;
-                    const showWorkout = (index) => {
-                        const workout = dayWorkouts[index];
-                        const member = this.members.find(m => m.id === workout.memberId);
+                        const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+                        deletePhotoBtn.onclick = () => {
+                            this.deleteWorkoutPhoto(currentWorkout.id, allPhotos[index]);
+                        };
                         
-                        if (workout.photoUrl) {
-                            modalImage.src = workout.photoUrl;
-                            modalImage.style.display = 'block';
-                            modalInfo.innerHTML = `
-                                <strong>${member ? member.nickname : '알 수 없음'}</strong>의 운동<br>
-                                ${index + 1} / ${dayWorkouts.length}<br>
-                                <button id="deletePhotoBtn" class="secondary-btn" style="margin-top: 15px;">사진 삭제</button>
-                            `;
-                            
-                            // 사진 삭제 버튼 이벤트 설정
-                            setTimeout(() => {
-                                document.getElementById('deletePhotoBtn').addEventListener('click', () => {
-                                    this.deleteWorkoutPhoto(workout.id, workout.photoUrl);
-                                });
-                            }, 100);
-                        } else {
-                            modalImage.style.display = 'none';
-                            modalInfo.innerHTML = `
-                                <strong>${member ? member.nickname : '알 수 없음'}</strong>의 운동<br>
-                                ${index + 1} / ${dayWorkouts.length}<br>
-                                <em style="color: #666;">사진이 삭제된 운동입니다.</em>
-                            `;
-                        }
+                        // 운동 삭제 버튼 이벤트 설정
+                        const deleteWorkoutBtn = document.getElementById('deleteWorkoutBtn');
+                        deleteWorkoutBtn.onclick = () => {
+                            this.deleteWorkout(currentWorkout.id);
+                        };
                     };
                     
-                    showWorkout(0);
+                    showPhoto(0);
                     
                     // 이전/다음 버튼 표시 및 이벤트 설정
                     const prevBtn = document.getElementById('prevWorkoutBtn');
@@ -1822,13 +1905,13 @@
                     nextBtn.style.display = 'inline-block';
                     
                     prevBtn.onclick = () => {
-                        currentIndex = (currentIndex - 1 + dayWorkouts.length) % dayWorkouts.length;
-                        showWorkout(currentIndex);
+                        currentIndex = (currentIndex - 1 + allPhotos.length) % allPhotos.length;
+                        showPhoto(currentIndex);
                     };
                     
                     nextBtn.onclick = () => {
-                        currentIndex = (currentIndex + 1) % dayWorkouts.length;
-                        showWorkout(currentIndex);
+                        currentIndex = (currentIndex + 1) % allPhotos.length;
+                        showPhoto(currentIndex);
                     };
                 }
                 
@@ -1838,10 +1921,11 @@
             async deleteWorkoutPhoto(workoutId, photoUrl) {
                 // 비밀번호 확인
                 const pin = prompt('사진 삭제를 위해 비밀번호를 입력해주세요:');
-                if (!pin || !/^\d{4}$/.test(pin)) {
+                if (!pin || !/^\d{4}$/.test(pin.trim())) {
                     alert('비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
+                const trimmedPin = pin.trim();
 
                 try {
                     // 해당 운동의 멤버 정보 조회
@@ -1869,7 +1953,7 @@
                         return;
                     }
                     
-                    if (memberData.pin !== pin) {
+                    if (memberData.pin !== trimmedPin) {
                         alert('비밀번호가 올바르지 않습니다.');
                         return;
                     }
@@ -1906,24 +1990,60 @@
                         }
                     }
 
-                    // 운동 데이터에서 photo_url만 null로 업데이트
-                    console.log('데이터베이스에서 photo_url을 null로 업데이트 시도:', workoutId);
-                    const { error: updateErr } = await supabase
-                        .from('workouts')
-                        .update({ photo_url: null })
-                        .eq('id', workoutId);
-                    
-                    if (updateErr) {
-                        console.error('데이터베이스 업데이트 실패:', updateErr);
-                        throw new Error(`데이터베이스 업데이트 실패: ${updateErr.message}`);
+                    // 운동 데이터에서 사진 삭제
+                    const currentWorkout = this.workouts.find(w => w.id === workoutId);
+                    if (currentWorkout && currentWorkout.photoUrls && currentWorkout.photoUrls.length > 0) {
+                        // photo_urls 배열에서 해당 사진 제거
+                        const updatedPhotoUrls = currentWorkout.photoUrls.filter(url => url !== photoUrl);
+                        
+                        if (updatedPhotoUrls.length === 0) {
+                            // 모든 사진이 삭제된 경우 photo_urls를 null로 설정
+                            console.log('모든 사진 삭제, photo_urls를 null로 업데이트:', workoutId);
+                            const { error: updateErr } = await supabase
+                                .from('workouts')
+                                .update({ photo_urls: null })
+                                .eq('id', workoutId);
+                            
+                            if (updateErr) {
+                                console.error('데이터베이스 업데이트 실패:', updateErr);
+                                throw new Error(`데이터베이스 업데이트 실패: ${updateErr.message}`);
+                            }
+                            
+                            // 로컬 데이터 업데이트
+                            currentWorkout.photoUrls = null;
+                        } else {
+                            // 일부 사진만 삭제된 경우 photo_urls 배열 업데이트
+                            console.log('일부 사진 삭제, photo_urls 배열 업데이트:', workoutId);
+                            const { error: updateErr } = await supabase
+                                .from('workouts')
+                                .update({ photo_urls: updatedPhotoUrls })
+                                .eq('id', workoutId);
+                            
+                            if (updateErr) {
+                                console.error('데이터베이스 업데이트 실패:', updateErr);
+                                throw new Error(`데이터베이스 업데이트 실패: ${updateErr.message}`);
+                            }
+                            
+                            // 로컬 데이터 업데이트
+                            currentWorkout.photoUrls = updatedPhotoUrls;
+                        }
                     } else {
-                        console.log('데이터베이스 업데이트 성공:', workoutId);
-                    }
-
-                    // 로컬 데이터 업데이트
-                    const localWorkout = this.workouts.find(w => w.id === workoutId);
-                    if (localWorkout) {
-                        localWorkout.photoUrl = null;
+                        // 기존 photo_url 필드 사용하는 경우
+                        console.log('기존 photo_url 필드 null로 업데이트:', workoutId);
+                        const { error: updateErr } = await supabase
+                            .from('workouts')
+                            .update({ photo_url: null })
+                            .eq('id', workoutId);
+                        
+                        if (updateErr) {
+                            console.error('데이터베이스 업데이트 실패:', updateErr);
+                            throw new Error(`데이터베이스 업데이트 실패: ${updateErr.message}`);
+                        }
+                        
+                        // 로컬 데이터 업데이트
+                        if (currentWorkout) {
+                            currentWorkout.photoUrl = null;
+                        }
                     }
 
                     alert('사진이 성공적으로 삭제되었습니다. 운동 기록은 유지됩니다.');
@@ -1941,6 +2061,142 @@
                 } catch (error) {
                     console.error('사진 삭제 중 오류 발생:', error);
                     alert('사진 삭제에 실패했습니다: ' + (error?.message || error));
+                }
+            }
+
+            async deleteWorkout(workoutId) {
+                console.log('운동 삭제 시작:', workoutId);
+                
+                // 비밀번호 요청
+                const pin = prompt('운동 삭제를 위해 비밀번호를 입력해주세요:');
+                if (!pin || !/^\d{4}$/.test(pin.trim())) {
+                    alert('비밀번호는 숫자 4자리여야 합니다.');
+                    return;
+                }
+                const trimmedPin = pin.trim();
+
+                try {
+                    // 해당 운동의 멤버 정보 조회
+                    const workout = this.workouts.find(w => w.id === workoutId);
+                    if (!workout) {
+                        alert('운동 정보를 찾을 수 없습니다.');
+                        return;
+                    }
+
+                    const member = this.members.find(m => m.id === workout.memberId);
+                    if (!member) {
+                        alert('멤버 정보를 찾을 수 없습니다.');
+                        return;
+                    }
+
+                    // 비밀번호 확인
+                    const { data: memberData, error: memberError } = await supabase
+                        .from('members')
+                        .select('id, nickname, pin')
+                        .eq('id', workout.memberId)
+                        .single();
+                    
+                    if (memberError || !memberData) {
+                        alert('멤버 정보를 찾을 수 없습니다.');
+                        return;
+                    }
+                    
+                    if (memberData.pin !== trimmedPin) {
+                        alert('비밀번호가 올바르지 않습니다.');
+                        return;
+                    }
+
+                    // 확인 메시지
+                    if (!confirm(`정말로 ${member.nickname}의 운동을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+                        return;
+                    }
+
+                    if (this.useLocalStorage) {
+                        // 로컬 스토리지 모드
+                        const index = this.workouts.findIndex(w => w.id === workoutId);
+                        if (index > -1) {
+                            this.workouts.splice(index, 1);
+                            this.saveLocalData();
+                            alert('운동이 성공적으로 삭제되었습니다.');
+                        }
+                    } else {
+                        // Supabase 모드
+                        
+                        // Storage에서 사진 파일 삭제
+                        const photosToDelete = [];
+                        
+                        // photo_urls 배열의 모든 사진 삭제
+                        if (workout.photoUrls && workout.photoUrls.length > 0) {
+                            workout.photoUrls.forEach(photoUrl => {
+                                const urlParts = photoUrl.split('/workouts/');
+                                if (urlParts.length > 1) {
+                                    photosToDelete.push(urlParts[1]);
+                                }
+                            });
+                        }
+                        
+                        // photo_url 단일 사진 삭제 (기존 데이터)
+                        if (workout.photoUrl) {
+                            const urlParts = workout.photoUrl.split('/workouts/');
+                            if (urlParts.length > 1) {
+                                photosToDelete.push(urlParts[1]);
+                            }
+                        }
+                        
+                        // Storage에서 모든 사진 삭제
+                        if (photosToDelete.length > 0) {
+                            try {
+                                console.log('Storage에서 파일들 삭제 시도:', photosToDelete);
+                                
+                                const { error: storageDeleteErr } = await supabase
+                                    .storage
+                                    .from('workouts')
+                                    .remove(photosToDelete);
+                                
+                                if (storageDeleteErr) {
+                                    console.error('Storage 파일 삭제 실패:', storageDeleteErr);
+                                    // Storage 삭제 실패해도 계속 진행
+                                } else {
+                                    console.log('Storage 파일 삭제 성공:', photosToDelete.length, '개');
+                                }
+                            } catch (storageError) {
+                                console.error('Storage 삭제 중 오류:', storageError);
+                                // Storage 삭제 실패해도 계속 진행
+                            }
+                        }
+
+                        // 데이터베이스에서 운동 삭제
+                        console.log('데이터베이스에서 운동 삭제 시도:', workoutId);
+                        const { error: deleteErr } = await supabase
+                            .from('workouts')
+                            .delete()
+                            .eq('id', workoutId);
+                        
+                        if (deleteErr) {
+                            console.error('데이터베이스 삭제 실패:', deleteErr);
+                            throw new Error(`데이터베이스 삭제 실패: ${deleteErr.message}`);
+                        } else {
+                            console.log('데이터베이스 삭제 성공:', workoutId);
+                        }
+
+                        alert('운동이 성공적으로 삭제되었습니다.');
+                    }
+                    
+                    // 모달 닫기
+                    document.getElementById('photoModal').style.display = 'none';
+                    
+                    // Supabase에서 최신 데이터 다시 로드
+                    if (!this.useLocalStorage) {
+                        await this.loadWorkoutsFromSupabase();
+                    }
+                    
+                    // 통계 및 캘린더 새로고침
+                    this.renderStats();
+                    this.renderWeeklyCalendar();
+                    
+                } catch (error) {
+                    console.error('운동 삭제 중 오류 발생:', error);
+                    alert('운동 삭제에 실패했습니다: ' + (error?.message || error));
                 }
             }
 
