@@ -1281,13 +1281,16 @@
                     return;
                 }
 
-                // 운동 등록 시 비밀번호 요청
-                const pin = prompt('운동 등록을 위해 비밀번호를 입력해주세요:');
-                if (!pin || !/^\d{4}$/.test(pin.trim())) {
+                // 운동 등록 시 비밀번호 요청 (모바일 숫자 키패드)
+                const pin = await this.showNumpadModal('운동 등록을 위해 비밀번호를 입력해주세요:');
+                if (!pin) {
+                    return; // 취소된 경우
+                }
+                if (!/^\d{4}$/.test(pin)) {
                     alert('비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
-                const trimmedPin = pin.trim();
+                const trimmedPin = pin;
                 
                 // Supabase에서 최신 멤버 정보로 비밀번호 확인
                 try {
@@ -2315,6 +2318,99 @@
                     console.error('주별 사진 일괄 삭제 중 오류 발생:', error);
                     alert('주별 사진 일괄 삭제에 실패했습니다: ' + (error?.message || error));
                 }
+            }
+
+            // 넘패드 모달 표시 함수
+            showNumpadModal(title) {
+                return new Promise((resolve) => {
+                    // 모달 생성
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    modal.style.display = 'flex';
+                    modal.style.position = 'fixed';
+                    modal.style.zIndex = '1000';
+                    modal.style.left = '0';
+                    modal.style.top = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+
+                    modal.innerHTML = `
+                        <div style="background-color: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center;">
+                            <h3 style="margin-bottom: 20px;">${title}</h3>
+                            <div style="margin-bottom: 20px;">
+                                <input type="password" id="numpadInput" readonly placeholder="비밀번호를 입력하세요" 
+                                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; text-align: center; letter-spacing: 5px;"
+                                       inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                                <button class="numpad-btn" data-number="1" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">1</button>
+                                <button class="numpad-btn" data-number="2" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">2</button>
+                                <button class="numpad-btn" data-number="3" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">3</button>
+                                <button class="numpad-btn" data-number="4" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">4</button>
+                                <button class="numpad-btn" data-number="5" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">5</button>
+                                <button class="numpad-btn" data-number="6" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">6</button>
+                                <button class="numpad-btn" data-number="7" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">7</button>
+                                <button class="numpad-btn" data-number="8" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">8</button>
+                                <button class="numpad-btn" data-number="9" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">9</button>
+                                <button id="numpadClear" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #ff6b6b; color: white; cursor: pointer;">C</button>
+                                <button class="numpad-btn" data-number="0" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; cursor: pointer;">0</button>
+                                <button id="numpadEnter" style="padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 10px; background: #4ECDC4; color: white; cursor: pointer;">확인</button>
+                            </div>
+                            <button id="numpadCancel" style="padding: 10px 20px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; background: #6c757d; color: white; cursor: pointer;">취소</button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+
+                    const input = modal.querySelector('#numpadInput');
+                    let pin = '';
+
+                    // 숫자 버튼 이벤트
+                    modal.querySelectorAll('.numpad-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            if (pin.length < 4) {
+                                pin += btn.dataset.number;
+                                input.value = '*'.repeat(pin.length);
+                            }
+                        });
+                    });
+
+                    // 지우기 버튼
+                    modal.querySelector('#numpadClear').addEventListener('click', () => {
+                        pin = '';
+                        input.value = '';
+                    });
+
+                    // 확인 버튼
+                    modal.querySelector('#numpadEnter').addEventListener('click', () => {
+                        if (pin.length === 4) {
+                            document.body.removeChild(modal);
+                            resolve(pin);
+                        } else {
+                            alert('비밀번호 4자리를 입력해주세요.');
+                        }
+                    });
+
+                    // 취소 버튼
+                    modal.querySelector('#numpadCancel').addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                        resolve(null);
+                    });
+
+                    // 모달 외부 클릭 시 취소
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            document.body.removeChild(modal);
+                            resolve(null);
+                        }
+                    });
+
+                    // 입력 필드에 포커스
+                    input.focus();
+                });
             }
 
         }
