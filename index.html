@@ -265,6 +265,117 @@
             border: 2px solid #ddd;
         }
 
+        .photos-preview {
+            margin-top: 15px;
+            max-width: 600px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            padding: 8px 12px;
+        }
+
+        .photos-preview:empty {
+            display: none;
+        }
+
+        .photos-preview ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .photos-preview li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .photos-preview li:last-child {
+            border-bottom: none;
+        }
+
+        .photos-preview .file-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .photos-preview .file-size {
+            flex-shrink: 0;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .photos-preview .file-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .photos-preview .remove-file-btn {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #ef4444;
+            border-radius: 6px;
+            width: 24px;
+            height: 24px;
+            font-size: 0.9rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .photos-preview .remove-file-btn:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .photos-preview .file-name-btn {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #1f2937;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .photos-preview .file-name-btn:hover {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .photos-preview .file-name-btn.active {
+            border-color: #3b82f6;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
+        .photos-preview .selected-photo-preview {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #cbd5e1;
+            text-align: center;
+        }
+
+        .photos-preview .selected-photo-preview img {
+            max-width: 180px;
+            max-height: 180px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            object-fit: contain;
+            background: #fff;
+        }
+
         .calendar-controls {
             display: flex;
             align-items: center;
@@ -918,6 +1029,8 @@
             constructor() {
                 this.members = [];
                 this.workouts = [];
+                this.selectedWorkoutFiles = [];
+                this.selectedPreviewIndex = 0;
                 this.currentDate = new Date();
                 this.memberColors = [
                     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
@@ -1086,7 +1199,9 @@
 
                 // 사진 미리보기 (여러 사진)
                 document.getElementById('workoutPhotos').addEventListener('change', (e) => {
-                    this.previewPhotos(e.target.files);
+                    this.selectedWorkoutFiles = Array.from(e.target.files || []);
+                    this.selectedPreviewIndex = Math.max(0, this.selectedWorkoutFiles.length - 1);
+                    this.previewPhotos(this.selectedWorkoutFiles);
                 });
 
 
@@ -1257,7 +1372,7 @@
                 
                 const memberId = document.getElementById('memberSelect').value;
                 const date = document.getElementById('workoutDate').value; // 사용자가 선택한 날짜
-                const photoFiles = document.getElementById('workoutPhotos').files;
+                const photoFiles = this.selectedWorkoutFiles;
                 const photoUrlInput = '';
 
                 console.log('운동 추가 시작:', { memberId, date, photoFilesCount: photoFiles?.length, photoUrlInput });
@@ -1352,6 +1467,8 @@
                         // 폼 초기화
                         document.getElementById('workoutForm').reset();
                         document.getElementById('photosPreview').innerHTML = '';
+                        this.selectedWorkoutFiles = [];
+                        this.selectedPreviewIndex = 0;
                         alert(`운동이 성공적으로 등록되었습니다! (로컬 모드, ${photoFiles.length}개의 사진)`);
                         
                         this.renderStats();
@@ -1415,6 +1532,8 @@
                     // 폼 초기화
                     document.getElementById('workoutForm').reset();
                     document.getElementById('photosPreview').innerHTML = '';
+                    this.selectedWorkoutFiles = [];
+                    this.selectedPreviewIndex = 0;
                     alert(`운동이 성공적으로 등록되었습니다! (${photoUrls.length}개의 사진)`);
                     location.reload();
                     
@@ -1478,20 +1597,97 @@
             previewPhotos(files) {
                 const preview = document.getElementById('photosPreview');
                 preview.innerHTML = '';
-                
-                if (files && files.length > 0) {
-                    Array.from(files).forEach((file, index) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.alt = `사진 ${index + 1}`;
-                            img.title = `사진 ${index + 1}: ${file.name}`;
-                            preview.appendChild(img);
-                        };
-                        reader.readAsDataURL(file);
-                    });
+
+                if (!files || files.length === 0) {
+                    this.selectedPreviewIndex = 0;
+                    return;
                 }
+
+                if (this.selectedPreviewIndex >= files.length) {
+                    this.selectedPreviewIndex = 0;
+                }
+
+                const list = document.createElement('ul');
+                Array.from(files).forEach((file, index) => {
+                    const item = document.createElement('li');
+                    const fileNameBtn = document.createElement('button');
+                    const fileActions = document.createElement('div');
+                    const fileSize = document.createElement('span');
+                    const removeBtn = document.createElement('button');
+
+                    fileNameBtn.className = 'file-name-btn';
+                    if (index === this.selectedPreviewIndex) {
+                        fileNameBtn.classList.add('active');
+                    }
+                    fileNameBtn.type = 'button';
+                    fileNameBtn.textContent = file.name;
+                    fileNameBtn.title = `${file.name} 미리보기`;
+                    fileNameBtn.addEventListener('click', () => {
+                        this.selectedPreviewIndex = index;
+                        this.previewPhotos(this.selectedWorkoutFiles);
+                    });
+
+                    fileActions.className = 'file-actions';
+                    fileSize.className = 'file-size';
+                    fileSize.textContent = this.formatFileSize(file.size);
+
+                    removeBtn.className = 'remove-file-btn';
+                    removeBtn.type = 'button';
+                    removeBtn.textContent = 'x';
+                    removeBtn.title = `${file.name} 제거`;
+                    removeBtn.addEventListener('click', () => {
+                        this.removeSelectedPhoto(index);
+                    });
+
+                    fileActions.appendChild(fileSize);
+                    fileActions.appendChild(removeBtn);
+
+                    item.appendChild(fileNameBtn);
+                    item.appendChild(fileActions);
+                    list.appendChild(item);
+                });
+
+                preview.appendChild(list);
+
+                const activeFile = files[this.selectedPreviewIndex];
+                if (activeFile) {
+                    const previewBox = document.createElement('div');
+                    previewBox.className = 'selected-photo-preview';
+                    const image = document.createElement('img');
+                    image.alt = `${activeFile.name} 미리보기`;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        image.src = e.target.result;
+                    };
+                    reader.readAsDataURL(activeFile);
+
+                    previewBox.appendChild(image);
+                    preview.appendChild(previewBox);
+                }
+            }
+
+            removeSelectedPhoto(index) {
+                if (index < 0 || index >= this.selectedWorkoutFiles.length) return;
+
+                this.selectedWorkoutFiles.splice(index, 1);
+                if (this.selectedPreviewIndex >= this.selectedWorkoutFiles.length) {
+                    this.selectedPreviewIndex = Math.max(0, this.selectedWorkoutFiles.length - 1);
+                }
+                this.previewPhotos(this.selectedWorkoutFiles);
+
+                const workoutPhotosInput = document.getElementById('workoutPhotos');
+                if (!workoutPhotosInput) return;
+
+                const dataTransfer = new DataTransfer();
+                this.selectedWorkoutFiles.forEach((file) => dataTransfer.items.add(file));
+                workoutPhotosInput.files = dataTransfer.files;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes < 1024) return `${bytes} B`;
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
             }
 
             renderMembers() {
